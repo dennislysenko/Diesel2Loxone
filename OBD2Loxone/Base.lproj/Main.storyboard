@@ -72,16 +72,16 @@
                                         </subviews>
                                     </stackView>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="6fs-4Y-EkE">
-                                        <rect key="frame" x="99" y="97" width="195" height="20.333333333333329"/>
+                                        <rect key="frame" x="119.33333333333333" y="97" width="154.66666666666669" height="20.333333333333329"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Fuel Level" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dXg-df-Yby">
-                                                <rect key="frame" x="0.0" y="0.0" width="76" height="20.333333333333332"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="RPM" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dXg-df-Yby">
+                                                <rect key="frame" x="0.0" y="0.0" width="35.666666666666664" height="20.333333333333332"/>
                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="&lt;unavailable&gt;" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VYJ-5u-Be9">
-                                                <rect key="frame" x="84" y="0.0" width="111" height="20.333333333333332"/>
+                                                <rect key="frame" x="43.666666666666671" y="0.0" width="111.00000000000001" height="20.333333333333332"/>
                                                 <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
@@ -100,6 +100,8 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="deviceStatusLabel" destination="eHO-7D-2ix" id="WqL-Bm-TCo"/>
+                        <outlet property="rpmLabel" destination="VYJ-5u-Be9" id="ce4-yy-W4Q"/>
                         <outlet property="serverAddressLabel" destination="Sbp-Cq-45l" id="5LK-1a-Gyo"/>
                         <outlet property="serverStatusLabel" destination="7Oy-WQ-eM9" id="ksG-yh-DGS"/>
                     </connections>

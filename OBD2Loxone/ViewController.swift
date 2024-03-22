@@ -13,7 +13,8 @@ import AVFoundation
 struct ViewModel {
     var isServerRunning = false
     var isDeviceConnected = false
-    var lastFuelReading = 110
+    var deviceState: String = "Uninitialized"
+    var rpm: Int?
 }
 
 class ViewController: UIViewController {
@@ -29,21 +30,19 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var serverStatusLabel: UILabel!
     @IBOutlet weak var serverAddressLabel: UILabel!
+    @IBOutlet weak var deviceStatusLabel: UILabel!
+    @IBOutlet weak var rpmLabel: UILabel!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         webServer.delegate = self
-//        webServer.addDefaultHandler(forMethod: "GET", request: GCDWebServerRequest.self, processBlock: {request in
-//            return GCDWebServerDataResponse(html:"<html><body><p>Hello World</p></body></html>")
-//        })
-        webServer.addHandler(forMethod: "GET", path: "/fuel_reading", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
+        webServer.addHandler(forMethod: "GET", path: "/rpm", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
             guard let self = self else {
                 fatalError()
             }
 
-            // return viewModel.lastFuelReading in JSON result {"last_fuel_reading": 110}
-            return GCDWebServerDataResponse(jsonObject: ["last_fuel_reading": self.viewModel.lastFuelReading])
+            return GCDWebServerDataResponse(jsonObject: ["rpm": self.viewModel.rpm])
         })
 
         startWebServer()
@@ -56,8 +55,94 @@ class ViewController: UIViewController {
                                                selector: #selector(handleAudioSessionInterruption),
                                                name: AVAudioSession.interruptionNotification,
                                                object: AVAudioSession.sharedInstance())
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(onAdapterChangedState), name: NSNotification.Name(rawValue: LTOBD2AdapterDidUpdateState), object: nil)
+        
+        connectToAdapter()
     }
 
+    var pids: [LTOBD2Command] = []
+    var transporter: LTBTLESerialTransporter?
+    var obd2Adapter: LTOBD2AdapterELM327?
+    func connectToAdapter() {
+        var commandArray: [LTOBD2Command] = []
+        commandArray.append(contentsOf: [
+            LTOBD2CommandELM327_IDENTIFY.command(),
+            LTOBD2CommandELM327_IGNITION_STATUS.command(),
+            LTOBD2CommandELM327_READ_VOLTAGE.command(),
+            LTOBD2CommandELM327_DESCRIBE_PROTOCOL.command(),
+            
+            LTOBD2PID_VIN_CODE_0902(),
+            
+            LTOBD2PID_ENGINE_RPM_0C.forMode1()
+        ])
+        
+        self.pids = commandArray
+        
+        deviceStatusLabel.text = "Looking for adapter..."
+        
+        let transporter = LTBTLESerialTransporter(identifier: nil, serviceUUIDs: [CBUUID(string: "FFF0"), CBUUID(string: "FFE0"), CBUUID(string: "BEEF"), CBUUID(string: "E7810A71-73AE-499D-8C15-FAA9AEF0C3F2")])
+        self.transporter = transporter
+        
+        transporter.connect { [weak self] inputStream, outputStream in
+            guard let inputStream, let outputStream else {
+                print("Null input stream")
+                self?.deviceStatusLabel.text = "Could not connect"
+                return
+            }
+            
+            self?.obd2Adapter = LTOBD2AdapterELM327(inputStream: inputStream, outputStream: outputStream)
+            self?.obd2Adapter?.connect()
+        }
+        
+        transporter.startUpdatingSignalStrength(withInterval: 1.0)
+    }
+    
+    func disconnectAdapter() {
+        obd2Adapter?.disconnect()
+        transporter?.disconnect()
+    }
+    
+    // updates sensor data in a loop
+    func updateSensorData() {
+        let rpm = LTOBD2PID_ENGINE_RPM_0C.forMode1()
+        guard let obd2Adapter else {
+            fatalError()
+        }
+        
+        obd2Adapter.transmitMultipleCommands([rpm], completionHandler: { [weak self] commands in
+            DispatchQueue.main.async {
+                self?.viewModel.rpm = Int(rpm.formattedResponse.replacingOccurrences(of: "\u{202F}rpm", with: ""))
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: { [weak self] in
+                    self?.updateSensorData()
+                })
+            }
+        })
+    }
+    
+    @objc func onAdapterChangedState(_ notification: NSNotification) {
+        guard let obd2Adapter else {
+            return
+        }
+
+        DispatchQueue.main.async { [self] in
+            viewModel.deviceState = obd2Adapter.friendlyAdapterState.replacingOccurrences(of: "OBD2AdapterState", with: "")
+            
+            switch obd2Adapter.adapterState {
+            case OBD2AdapterStateDiscovering, OBD2AdapterStateConnected:
+                self.updateSensorData()
+            case OBD2AdapterStateGone:
+                break // handle being gone?
+            case OBD2AdapterStateUnsupportedProtocol:
+                // adapter ready, but vehicle uses an unsupported protocol
+                viewModel.deviceState = "UnsupportedProtocol(\(obd2Adapter.friendlyVehicleProtocol))"
+            default:
+                print("Unhandled adapter state", obd2Adapter.friendlyAdapterType)
+            }
+        }
+    }
+    
     @objc func handleAudioSessionInterruption(notification: Notification) {
         guard let userInfo = notification.userInfo,
             let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -113,6 +198,8 @@ class ViewController: UIViewController {
     func bind(_ viewModel: ViewModel) {
         serverStatusLabel.text = viewModel.isServerRunning ? "Running" : "Not Running"
         serverAddressLabel.text = webServer.serverURL?.absoluteString ?? "<unavailable>"
+        deviceStatusLabel.text = viewModel.deviceState
+        rpmLabel.text = viewModel.rpm == nil ? "<unavailable>" : String(viewModel.rpm!) + " rpm"
     }
 }
 

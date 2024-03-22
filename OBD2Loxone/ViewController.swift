@@ -10,11 +10,45 @@ import GCDWebServer
 import LTSupportAutomotive
 import AVFoundation
 
+@propertyWrapper
+struct UserDefault<Value> {
+    let key: String
+    let defaultValue: Value
+    var container: UserDefaults = .standard
+
+    var wrappedValue: Value {
+        get {
+            return container.object(forKey: key) as? Value ?? defaultValue
+        }
+        set {
+            container.set(newValue, forKey: key)
+        }
+    }
+}
+
+
+class LTOBD2PID_ODOMETER_A6: LTOBD2PID {}
+
 struct ViewModel {
     var isServerRunning = false
     var isDeviceConnected = false
     var deviceState: String = "Uninitialized"
+
+    var vin: String?
+    var protocolVersion: String?
+    
     var rpm: Int?
+    var odometerReading: Int? // km
+    var fuelRate: Double? // L/h
+    var waterTemp: Int? // oC
+    var fuelLevel: Double? // %, but as 0-100
+    var tankCapacity: Double? // L
+    
+    var fuelInTank: Double? { // L
+        guard let tankCapacity, let fuelLevel else { return nil }
+        
+        return Double(tankCapacity) * fuelLevel / 100
+    }
 }
 
 class ViewController: UIViewController {
@@ -28,27 +62,54 @@ class ViewController: UIViewController {
         }
     }
     
+    @UserDefault(key: "tankCapacity_", defaultValue: 50)
+    var tankCapacity: Double
+    
     @IBOutlet weak var serverStatusLabel: UILabel!
     @IBOutlet weak var serverAddressLabel: UILabel!
     @IBOutlet weak var deviceStatusLabel: UILabel!
+
+    @IBOutlet weak var obdProtocolLabel: UILabel!
+    @IBOutlet weak var vinLabel: UILabel!
+
     @IBOutlet weak var rpmLabel: UILabel!
+    @IBOutlet weak var odometerLabel: UILabel!
+    @IBOutlet weak var waterTempLabel: UILabel!
+    
+    @IBOutlet weak var tankCapacityField: UITextField!
+    @IBOutlet weak var fuelRateLabel: UILabel!
+    @IBOutlet weak var fuelInTankLabel: UILabel!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         webServer.delegate = self
-        webServer.addHandler(forMethod: "GET", path: "/rpm", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
+        webServer.addHandler(forMethod: "GET", path: "/readings", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
             guard let self = self else {
                 fatalError()
             }
 
-            return GCDWebServerDataResponse(jsonObject: ["rpm": self.viewModel.rpm])
+            return GCDWebServerDataResponse(jsonObject: [
+                "rpm": self.viewModel.rpm as Any,
+                "odometer_reading": self.viewModel.odometerReading as Any,
+                "fuel_rate": self.viewModel.fuelRate as Any,
+                "user_specified_tank_capacity": self.viewModel.tankCapacity as Any,
+                "fuel_level_percent": self.viewModel.fuelLevel as Any,
+                "water_temp": self.viewModel.waterTemp as Any,
+                "fuel_in_tank": self.viewModel.fuelInTank as Any,
+
+                "device_state": self.viewModel.deviceState as Any,
+                "protocol_version": self.viewModel.protocolVersion as Any,
+                "vin": self.viewModel.vin as Any
+            ])
         })
 
         startWebServer()
         
         setupAudioPlayer()
         
+        viewModel.tankCapacity = tankCapacity
+        tankCapacityField.text = String(tankCapacity)
         bind(viewModel)
 
         NotificationCenter.default.addObserver(self,
@@ -106,19 +167,48 @@ class ViewController: UIViewController {
     // updates sensor data in a loop
     func updateSensorData() {
         let rpm = LTOBD2PID_ENGINE_RPM_0C.forMode1()
+        let odometer = LTOBD2PID_ODOMETER_A6.forMode1()
+        let fuelRate = LTOBD2PID_ENGINE_FUEL_RATE_5E.forMode1()
+        let coolantTemp = LTOBD2PID_COOLANT_TEMP_05.forMode1()
+        let fuelLevel = LTOBD2PID_FUEL_TANK_LEVEL_2F.forMode1()
+
         guard let obd2Adapter else {
             fatalError()
         }
         
-        obd2Adapter.transmitMultipleCommands([rpm], completionHandler: { [weak self] commands in
+        let commands = [rpm, odometer, fuelRate, coolantTemp, fuelLevel]
+        obd2Adapter.transmitMultipleCommands(commands, completionHandler: { [weak self] commands in
             DispatchQueue.main.async {
                 self?.viewModel.rpm = Int(rpm.formattedResponse.replacingOccurrences(of: "\u{202F}rpm", with: ""))
+                self?.viewModel.odometerReading = Int(odometer.formattedResponse)
+                self?.viewModel.fuelRate = Double(fuelRate.formattedResponse.replacingOccurrences(of: "\u{202F}L/h", with: ""))
+                self?.viewModel.waterTemp = Int(coolantTemp.formattedResponse.replacingOccurrences(of: "\u{202F}°C", with: ""))
+                self?.viewModel.fuelLevel = Double(fuelLevel.formattedResponse.replacingOccurrences(of: "\u{202F}%", with: ""))
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: { [weak self] in
                     self?.updateSensorData()
                 })
             }
         })
+    }
+    
+    func adapterDidConnect() {
+        guard let obd2Adapter else {
+            fatalError()
+        }
+        
+        let vin = LTOBD2PID_VIN_CODE_0902()
+        let describeProtocol = LTOBD2CommandELM327_DESCRIBE_PROTOCOL.command()
+        
+        let commands = [vin, describeProtocol]
+        obd2Adapter.transmitMultipleCommands(commands, completionHandler: { [weak self] commands in
+            DispatchQueue.main.async {
+                self?.viewModel.vin = vin.formattedResponse
+                self?.viewModel.protocolVersion = describeProtocol.formattedResponse
+            }
+        })
+        
+        self.updateSensorData()
     }
     
     @objc func onAdapterChangedState(_ notification: NSNotification) {
@@ -130,8 +220,9 @@ class ViewController: UIViewController {
             viewModel.deviceState = obd2Adapter.friendlyAdapterState.replacingOccurrences(of: "OBD2AdapterState", with: "")
             
             switch obd2Adapter.adapterState {
-            case OBD2AdapterStateDiscovering, OBD2AdapterStateConnected:
-                self.updateSensorData()
+            case OBD2AdapterStateDiscovering: break
+            case OBD2AdapterStateConnected:
+                self.adapterDidConnect()
             case OBD2AdapterStateGone:
                 break // handle being gone?
             case OBD2AdapterStateUnsupportedProtocol:
@@ -191,7 +282,6 @@ class ViewController: UIViewController {
                 GCDWebServerOption_BonjourName: "OBD2Loxone Server",
                 GCDWebServerOption_AutomaticallySuspendInBackground: NSNumber(value: false)
             ])
-            print("Visit \(webServer.serverURL) in your web browser")
         }
     }
     
@@ -199,7 +289,15 @@ class ViewController: UIViewController {
         serverStatusLabel.text = viewModel.isServerRunning ? "Running" : "Not Running"
         serverAddressLabel.text = webServer.serverURL?.absoluteString ?? "<unavailable>"
         deviceStatusLabel.text = viewModel.deviceState
+
+        vinLabel.text = viewModel.vin
+        obdProtocolLabel.text = viewModel.protocolVersion
+        
         rpmLabel.text = viewModel.rpm == nil ? "<unavailable>" : String(viewModel.rpm!) + " rpm"
+        odometerLabel.text = viewModel.odometerReading == nil ? "<unavailable>" : String(viewModel.odometerReading!) + " km"
+        fuelRateLabel.text = viewModel.fuelRate == nil ? "<unavailable>" : String(viewModel.fuelRate!) + " L/h"
+        waterTempLabel.text = viewModel.waterTemp == nil ? "<unavailable>" : String(viewModel.waterTemp!) + " °C"
+        fuelInTankLabel.text = viewModel.fuelInTank == nil ? "<unavailable>" : String(viewModel.fuelInTank!) + " L"
     }
 }
 
@@ -210,6 +308,23 @@ extension ViewController: GCDWebServerDelegate {
     
     func webServerDidStop(_ server: GCDWebServer) {
         viewModel.isServerRunning = false
+    }
+}
+
+extension ViewController: UITextFieldDelegate {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        textField.selectAll(nil)
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == tankCapacityField {
+            tankCapacity = Double(textField.text ?? "") ?? tankCapacity
+            viewModel.tankCapacity = tankCapacity
+            textField.text = String(tankCapacity)
+            textField.endEditing(true)
+        }
+        
+        return true
     }
 }
 

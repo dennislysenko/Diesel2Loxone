@@ -13,6 +13,9 @@
 		954AEBBD2BACAE87007F042E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 954AEBBC2BACAE87007F042E /* Base */; };
 		954AEBBF2BACAE88007F042E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 954AEBBE2BACAE88007F042E /* Assets.xcassets */; };
 		954AEBC22BACAE88007F042E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 954AEBC12BACAE88007F042E /* Base */; };
+		954AEBCB2BACAECB007F042E /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 954AEBCA2BACAECB007F042E /* GCDWebServer */; };
+		954AEBCE2BACAEE2007F042E /* LTSupportAutomotive in Frameworks */ = {isa = PBXBuildFile; productRef = 954AEBCD2BACAEE2007F042E /* LTSupportAutomotive */; };
+		95DA314E2BACDAC500761B36 /* silence.wav in Resources */ = {isa = PBXBuildFile; fileRef = 95DA314D2BACDAC400761B36 /* silence.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +27,7 @@
 		954AEBBE2BACAE88007F042E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		954AEBC12BACAE88007F042E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		954AEBC32BACAE88007F042E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		95DA314D2BACDAC400761B36 /* silence.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = silence.wav; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +35,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				954AEBCB2BACAECB007F042E /* GCDWebServer in Frameworks */,
+				954AEBCE2BACAEE2007F042E /* LTSupportAutomotive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,6 +69,7 @@
 				954AEBBE2BACAE88007F042E /* Assets.xcassets */,
 				954AEBC02BACAE88007F042E /* LaunchScreen.storyboard */,
 				954AEBC32BACAE88007F042E /* Info.plist */,
+				95DA314D2BACDAC400761B36 /* silence.wav */,
 			);
 			path = OBD2Loxone;
 			sourceTree = "<group>";
@@ -83,6 +90,10 @@
 			dependencies = (
 			);
 			name = OBD2Loxone;
+			packageProductDependencies = (
+				954AEBCA2BACAECB007F042E /* GCDWebServer */,
+				954AEBCD2BACAEE2007F042E /* LTSupportAutomotive */,
+			);
 			productName = OBD2Loxone;
 			productReference = 954AEBB22BACAE87007F042E /* OBD2Loxone.app */;
 			productType = "com.apple.product-type.application";
@@ -111,6 +122,10 @@
 				Base,
 			);
 			mainGroup = 954AEBA92BACAE87007F042E;
+			packageReferences = (
+				954AEBC92BACAECB007F042E /* XCRemoteSwiftPackageReference "GCDWebServer" */,
+				954AEBCC2BACAEE2007F042E /* XCRemoteSwiftPackageReference "LTSupportAutomotive" */,
+			);
 			productRefGroup = 954AEBB32BACAE87007F042E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -127,6 +142,7 @@
 			files = (
 				954AEBBF2BACAE88007F042E /* Assets.xcassets in Resources */,
 				954AEBC22BACAE88007F042E /* Base in Resources */,
+				95DA314E2BACDAC500761B36 /* silence.wav in Resources */,
 				954AEBBD2BACAE87007F042E /* Base in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -300,6 +316,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -328,6 +345,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -363,6 +381,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		954AEBC92BACAECB007F042E /* XCRemoteSwiftPackageReference "GCDWebServer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/yene/GCDWebServer";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.5.7;
+			};
+		};
+		954AEBCC2BACAEE2007F042E /* XCRemoteSwiftPackageReference "LTSupportAutomotive" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mickeyl/LTSupportAutomotive";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		954AEBCA2BACAECB007F042E /* GCDWebServer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 954AEBC92BACAECB007F042E /* XCRemoteSwiftPackageReference "GCDWebServer" */;
+			productName = GCDWebServer;
+		};
+		954AEBCD2BACAEE2007F042E /* LTSupportAutomotive */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 954AEBCC2BACAEE2007F042E /* XCRemoteSwiftPackageReference "LTSupportAutomotive" */;
+			productName = LTSupportAutomotive;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 954AEBAA2BACAE87007F042E /* Project object */;
 }

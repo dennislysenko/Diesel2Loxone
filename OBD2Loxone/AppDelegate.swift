@@ -6,14 +6,13 @@
 //
 
 import UIKit
+import GCDWebServer
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
-
+    static let shared = UIApplication.shared.delegate as! AppDelegate
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
         return true
     }
 
@@ -31,6 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
 
-
+    func applicationDidEnterBackground(_ application: UIApplication) {
+    }
 }
 

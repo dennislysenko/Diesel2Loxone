@@ -51,36 +51,13 @@ class ViewController: UIViewController {
         setupAudioPlayer()
         
         bind(viewModel)
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
-        
+
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleAudioSessionInterruption),
                                                name: AVAudioSession.interruptionNotification,
                                                object: AVAudioSession.sharedInstance())
     }
-    
-    var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-    @objc func applicationDidEnterBackground() {
-//        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
-//            // This block is called when your background time is about to expire.
-//            // End the task if it's still running.
-//            self?.webServer.stop()
-//        }
-    }
-    
-    @objc func applicationWillEnterForeground() {
-        if backgroundTask != .invalid {
-            UIApplication.shared.endBackgroundTask(backgroundTask)
-            backgroundTask = .invalid
-            
-            if !webServer.isRunning {
-                startWebServer()
-            }
-        }
-    }
-    
+
     @objc func handleAudioSessionInterruption(notification: Notification) {
         guard let userInfo = notification.userInfo,
             let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,

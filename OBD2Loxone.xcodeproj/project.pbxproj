@@ -15,6 +15,9 @@
 		954AEBC22BACAE88007F042E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 954AEBC12BACAE88007F042E /* Base */; };
 		954AEBCB2BACAECB007F042E /* GCDWebServer in Frameworks */ = {isa = PBXBuildFile; productRef = 954AEBCA2BACAECB007F042E /* GCDWebServer */; };
 		954AEBCE2BACAEE2007F042E /* LTSupportAutomotive in Frameworks */ = {isa = PBXBuildFile; productRef = 954AEBCD2BACAEE2007F042E /* LTSupportAutomotive */; };
+		95C478872BB37BA200F57443 /* UserDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C478862BB37BA200F57443 /* UserDefault.swift */; };
+		95C4788A2BB37BB300F57443 /* OBDDataPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C478892BB37BB300F57443 /* OBDDataPoint.swift */; };
+		95C4788C2BB37E8A00F57443 /* ReadingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4788B2BB37E8A00F57443 /* ReadingsService.swift */; };
 		95DA314E2BACDAC500761B36 /* silence.wav in Resources */ = {isa = PBXBuildFile; fileRef = 95DA314D2BACDAC400761B36 /* silence.wav */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +30,9 @@
 		954AEBBE2BACAE88007F042E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		954AEBC12BACAE88007F042E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		954AEBC32BACAE88007F042E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		95C478862BB37BA200F57443 /* UserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefault.swift; sourceTree = "<group>"; };
+		95C478892BB37BB300F57443 /* OBDDataPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDDataPoint.swift; sourceTree = "<group>"; };
+		95C4788B2BB37E8A00F57443 /* ReadingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingsService.swift; sourceTree = "<group>"; };
 		95DA314D2BACDAC400761B36 /* silence.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = silence.wav; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -70,6 +76,9 @@
 				954AEBC02BACAE88007F042E /* LaunchScreen.storyboard */,
 				954AEBC32BACAE88007F042E /* Info.plist */,
 				95DA314D2BACDAC400761B36 /* silence.wav */,
+				95C478862BB37BA200F57443 /* UserDefault.swift */,
+				95C478892BB37BB300F57443 /* OBDDataPoint.swift */,
+				95C4788B2BB37E8A00F57443 /* ReadingsService.swift */,
 			);
 			path = OBD2Loxone;
 			sourceTree = "<group>";
@@ -154,8 +163,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95C478872BB37BA200F57443 /* UserDefault.swift in Sources */,
 				954AEBBA2BACAE87007F042E /* ViewController.swift in Sources */,
 				954AEBB62BACAE87007F042E /* AppDelegate.swift in Sources */,
+				95C4788A2BB37BB300F57443 /* OBDDataPoint.swift in Sources */,
+				95C4788C2BB37E8A00F57443 /* ReadingsService.swift in Sources */,
 				954AEBB82BACAE87007F042E /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -312,6 +324,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OBD2Loxone/Info.plist;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to OBD2 Adapter";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "To track GPS data points";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To track GPS data points";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -342,6 +356,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OBD2Loxone/Info.plist;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to OBD2 Adapter";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "To track GPS data points";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To track GPS data points";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;

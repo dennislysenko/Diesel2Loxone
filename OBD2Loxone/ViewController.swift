@@ -9,46 +9,32 @@ import UIKit
 import GCDWebServer
 import LTSupportAutomotive
 import AVFoundation
-
-@propertyWrapper
-struct UserDefault<Value> {
-    let key: String
-    let defaultValue: Value
-    var container: UserDefaults = .standard
-
-    var wrappedValue: Value {
-        get {
-            return container.object(forKey: key) as? Value ?? defaultValue
-        }
-        set {
-            container.set(newValue, forKey: key)
-        }
-    }
-}
+import CoreLocation
 
 
-class LTOBD2PID_ODOMETER_A6: LTOBD2PID {}
+//class LTOBD2PID_ODOMETER_A6: LTOBD2PID {
+//    override var formattedResponse: String {
+//        
+//    }
+//}
+
+import CoreLocation
 
 struct ViewModel {
     var isServerRunning = false
     var isDeviceConnected = false
     var deviceState: String = "Uninitialized"
+    
+    var lastKnownLatitude: Double?
+    var lastKnownLongitude: Double?
 
     var vin: String?
     var protocolVersion: String?
     
-    var rpm: Int?
-    var odometerReading: Int? // km
-    var fuelRate: Double? // L/h
-    var waterTemp: Int? // oC
-    var fuelLevel: Double? // %, but as 0-100
-    var tankCapacity: Double? // L
+    var baseDistance: Double? = 2000
+    var tankCapacity: Double?
     
-    var fuelInTank: Double? { // L
-        guard let tankCapacity, let fuelLevel else { return nil }
-        
-        return Double(tankCapacity) * fuelLevel / 100
-    }
+    var obdData: OBDDataPoint?
 }
 
 class ViewController: UIViewController {
@@ -64,6 +50,10 @@ class ViewController: UIViewController {
     
     @UserDefault(key: "tankCapacity_", defaultValue: 50)
     var tankCapacity: Double
+    
+    let locationManager = CLLocationManager()
+    
+    let readingsService = ReadingsService.shared
     
     @IBOutlet weak var serverStatusLabel: UILabel!
     @IBOutlet weak var serverAddressLabel: UILabel!
@@ -83,21 +73,38 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.pausesLocationUpdatesAutomatically = false
+        locationManager.allowsBackgroundLocationUpdates = true
+
+        locationManager.requestAlwaysAuthorization()
+        
+        if CLLocationManager.authorizationStatus() == .authorizedAlways || CLLocationManager.authorizationStatus() == .authorizedWhenInUse {
+            locationManager.startUpdatingLocation()
+        }
+        
         webServer.delegate = self
         webServer.addHandler(forMethod: "GET", path: "/readings", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
             guard let self = self else {
                 fatalError()
             }
 
-            return GCDWebServerDataResponse(jsonObject: [
-                "rpm": self.viewModel.rpm as Any,
-                "odometer_reading": self.viewModel.odometerReading as Any,
-                "fuel_rate": self.viewModel.fuelRate as Any,
-                "user_specified_tank_capacity": self.viewModel.tankCapacity as Any,
-                "fuel_level_percent": self.viewModel.fuelLevel as Any,
-                "water_temp": self.viewModel.waterTemp as Any,
-                "fuel_in_tank": self.viewModel.fuelInTank as Any,
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            
+            let pastFiveMinsOBDData = readingsService.getPast5MinutesOfReadings()
+            
+            guard let jsonData = try? encoder.encode(pastFiveMinsOBDData) else {
+                return GCDWebServerDataResponse(jsonObject: ["error": "could not encode codable obd data"])!
+            }
+            
+            guard let obdDataObject = try? JSONSerialization.jsonObject(with: jsonData, options: []) as? [[String: Any]] else {
+                return GCDWebServerDataResponse(jsonObject: ["error": "could not encode obd data object"])!
+            }
 
+            return GCDWebServerDataResponse(jsonObject: [
+                "obd_data": obdDataObject as Any,
                 "device_state": self.viewModel.deviceState as Any,
                 "protocol_version": self.viewModel.protocolVersion as Any,
                 "vin": self.viewModel.vin as Any
@@ -167,7 +174,7 @@ class ViewController: UIViewController {
     // updates sensor data in a loop
     func updateSensorData() {
         let rpm = LTOBD2PID_ENGINE_RPM_0C.forMode1()
-        let odometer = LTOBD2PID_ODOMETER_A6.forMode1()
+        let distanceTraveled = LTOBD2PID_DISTANCE_SINCE_DTC_CLEARED_31.forMode1()
         let fuelRate = LTOBD2PID_ENGINE_FUEL_RATE_5E.forMode1()
         let coolantTemp = LTOBD2PID_COOLANT_TEMP_05.forMode1()
         let fuelLevel = LTOBD2PID_FUEL_TANK_LEVEL_2F.forMode1()
@@ -176,14 +183,35 @@ class ViewController: UIViewController {
             fatalError()
         }
         
-        let commands = [rpm, odometer, fuelRate, coolantTemp, fuelLevel]
+        let commands = [rpm, distanceTraveled, fuelRate, coolantTemp, fuelLevel]
         obd2Adapter.transmitMultipleCommands(commands, completionHandler: { [weak self] commands in
             DispatchQueue.main.async {
-                self?.viewModel.rpm = Int(rpm.formattedResponse.replacingOccurrences(of: "\u{202F}rpm", with: ""))
-                self?.viewModel.odometerReading = Int(odometer.formattedResponse)
-                self?.viewModel.fuelRate = Double(fuelRate.formattedResponse.replacingOccurrences(of: "\u{202F}L/h", with: ""))
-                self?.viewModel.waterTemp = Int(coolantTemp.formattedResponse.replacingOccurrences(of: "\u{202F}°C", with: ""))
-                self?.viewModel.fuelLevel = Double(fuelLevel.formattedResponse.replacingOccurrences(of: "\u{202F}%", with: ""))
+                let rpm = Int(rpm.formattedResponse.replacingOccurrences(of: "\u{202F}rpm", with: ""))
+                let distanceReading = Double(distanceTraveled.formattedResponse.replacingOccurrences(of: "\u{202F}km", with: ""))
+                let fuelRate = Double(fuelRate.formattedResponse.replacingOccurrences(of: "\u{202F}L/h", with: ""))
+                let waterTemp = Int(coolantTemp.formattedResponse.replacingOccurrences(of: "\u{202F}°C", with: ""))
+                let fuelLevel = Double(fuelLevel.formattedResponse.replacingOccurrences(of: "\u{202F}%", with: ""))
+                
+                let obdData = OBDDataPoint(
+                    latitude: self?.viewModel.lastKnownLatitude,
+                    longitude: self?.viewModel.lastKnownLongitude,
+                    time: Date(),
+                    rpm: rpm,
+                    distanceReading: distanceReading,
+                    fuelRate: fuelRate,
+                    waterTemp: waterTemp,
+                    fuelLevel: fuelLevel,
+                    baseDistance: self?.viewModel.baseDistance,
+                    tankCapacity: self?.viewModel.tankCapacity
+                )
+                
+                self?.viewModel.obdData = obdData
+                
+                if let obdData {
+                    DispatchQueue.main.async {
+                        self?.readingsService.addReading(obdData)
+                    }
+                }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: { [weak self] in
                     self?.updateSensorData()
@@ -293,11 +321,19 @@ class ViewController: UIViewController {
         vinLabel.text = viewModel.vin
         obdProtocolLabel.text = viewModel.protocolVersion
         
-        rpmLabel.text = viewModel.rpm == nil ? "<unavailable>" : String(viewModel.rpm!) + " rpm"
-        odometerLabel.text = viewModel.odometerReading == nil ? "<unavailable>" : String(viewModel.odometerReading!) + " km"
-        fuelRateLabel.text = viewModel.fuelRate == nil ? "<unavailable>" : String(viewModel.fuelRate!) + " L/h"
-        waterTempLabel.text = viewModel.waterTemp == nil ? "<unavailable>" : String(viewModel.waterTemp!) + " °C"
-        fuelInTankLabel.text = viewModel.fuelInTank == nil ? "<unavailable>" : String(viewModel.fuelInTank!) + " L"
+        if let obdData = viewModel.obdData {
+            rpmLabel.text = obdData.rpm == nil ? "<unavailable>" : String(obdData.rpm!) + " rpm"
+            odometerLabel.text = obdData.odometerReading == nil ? "<unavailable>" : String(obdData.odometerReading!) + " km"
+            fuelRateLabel.text = obdData.fuelRate == nil ? "<unavailable>" : String(obdData.fuelRate!) + " L/h"
+            waterTempLabel.text = obdData.waterTemp == nil ? "<unavailable>" : String(obdData.waterTemp!) + " °C"
+            fuelInTankLabel.text = obdData.fuelInTank == nil ? "<unavailable>" : String(obdData.fuelInTank!) + " L"
+        } else {
+            rpmLabel.text = "<unavailable>"
+            odometerLabel.text = "<unavailable>"
+            fuelRateLabel.text = "<unavailable>"
+            waterTempLabel.text = "<unavailable>"
+            fuelInTankLabel.text = "<unavailable>"
+        }
     }
 }
 
@@ -326,5 +362,31 @@ extension ViewController: UITextFieldDelegate {
         
         return true
     }
+}
+
+extension ViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else {
+            return
+        }
+        
+        viewModel.lastKnownLatitude = location.coordinate.latitude
+        viewModel.lastKnownLongitude = location.coordinate.longitude
+        print("new location:", location.coordinate)
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        switch status {
+        case .restricted, .denied:
+            // Handle restriction or denial
+            break
+        case .authorizedWhenInUse, .authorizedAlways:
+            // Location permissions are granted. Start updating locations
+            locationManager.startUpdatingLocation()
+        default:
+            break
+        }
+    }
+
 }
 

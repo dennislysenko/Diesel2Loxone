@@ -10,6 +10,7 @@ import Foundation
 struct OBDDataPoint: Codable {
     let latitude: Double?
     let longitude: Double?
+    let elevation: Double?
     let time: Date?
     
     let rpm: Int?
@@ -17,6 +18,7 @@ struct OBDDataPoint: Codable {
     let fuelRate: Double? // L/h
     let waterTemp: Int? // oC
     let fuelLevel: Double? // %, but as 0-100
+    let engineLoad: Double?
     
     let baseDistance: Double? // km, set by user
     let tankCapacity: Double? // L, set by user
@@ -27,6 +29,7 @@ struct OBDDataPoint: Codable {
     init?(
         latitude: Double?,
         longitude: Double?,
+        elevation: Double?,
         time: Date?,
         
         rpm: Int?,
@@ -34,11 +37,13 @@ struct OBDDataPoint: Codable {
         fuelRate: Double?,
         waterTemp: Int?,
         fuelLevel: Double?,
+        engineLoad: Double?,
         baseDistance: Double?,
         tankCapacity: Double?
     ) {
         self.latitude = latitude
         self.longitude = longitude
+        self.elevation = elevation
         self.time = time
         
         self.rpm = rpm
@@ -46,6 +51,7 @@ struct OBDDataPoint: Codable {
         self.fuelRate = fuelRate
         self.waterTemp = waterTemp
         self.fuelLevel = fuelLevel
+        self.engineLoad = engineLoad
         self.baseDistance = baseDistance
         self.tankCapacity = tankCapacity
         

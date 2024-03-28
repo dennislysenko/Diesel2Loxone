@@ -27,6 +27,7 @@ struct ViewModel {
     
     var lastKnownLatitude: Double?
     var lastKnownLongitude: Double?
+    var lastKnownElevation: Double?
 
     var vin: String?
     var protocolVersion: String?
@@ -49,7 +50,10 @@ class ViewController: UIViewController {
     }
     
     @UserDefault(key: "tankCapacity_", defaultValue: 50)
-    var tankCapacity: Double
+    var savedTankCapacity: Double
+    
+    @UserDefault(key: "baseDistance_", defaultValue: 0)
+    var savedBaseDistance: Double
     
     let locationManager = CLLocationManager()
     
@@ -67,7 +71,12 @@ class ViewController: UIViewController {
     @IBOutlet weak var waterTempLabel: UILabel!
     
     @IBOutlet weak var tankCapacityField: UITextField!
+    @IBOutlet weak var odometerTextField: UITextField!
+    @IBOutlet weak var odometerActionButton: UIButton!
+    @IBOutlet weak var odometerCancelButton: UIButton!
+    
     @IBOutlet weak var fuelRateLabel: UILabel!
+    @IBOutlet weak var engineLoadLabel: UILabel!
     @IBOutlet weak var fuelInTankLabel: UILabel!
 
     override func viewDidLoad() {
@@ -111,14 +120,20 @@ class ViewController: UIViewController {
             ])
         })
 
+        // expose web server for requests
         startWebServer()
-        
-        setupAudioPlayer()
-        
-        viewModel.tankCapacity = tankCapacity
-        tankCapacityField.text = String(tankCapacity)
+
+        // load saved defaults
+        viewModel.tankCapacity = savedTankCapacity
+        viewModel.baseDistance = savedBaseDistance
         bind(viewModel)
 
+        tankCapacityField.text = String(savedTankCapacity)
+        odometerTextField.text = String(savedBaseDistance)
+
+        // set up background audio playback
+        setupAudioPlayer()
+        
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleAudioSessionInterruption),
                                                name: AVAudioSession.interruptionNotification,
@@ -126,7 +141,36 @@ class ViewController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(onAdapterChangedState), name: NSNotification.Name(rawValue: LTOBD2AdapterDidUpdateState), object: nil)
         
+        // connect to adapter on launch and anytime we return from background
         connectToAdapter()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
+        
+        // get keyboard show/hide notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    @objc func applicationDidBecomeActive() {
+        connectToAdapter()
+    }
+    
+    @objc func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            UIView.animate(withDuration: 0.3) {
+                if self.view.transform.ty == 0 {
+                    self.view.transform.ty -= keyboardSize.height * 0.3
+                }
+            }
+        }
+    }
+    
+    @objc func keyboardWillHide(notification: NSNotification) {
+        UIView.animate(withDuration: 0.3) {
+            if self.view.transform.ty != 0 {
+                self.view.transform.ty = 0
+            }
+        }
     }
 
     var pids: [LTOBD2Command] = []
@@ -178,12 +222,13 @@ class ViewController: UIViewController {
         let fuelRate = LTOBD2PID_ENGINE_FUEL_RATE_5E.forMode1()
         let coolantTemp = LTOBD2PID_COOLANT_TEMP_05.forMode1()
         let fuelLevel = LTOBD2PID_FUEL_TANK_LEVEL_2F.forMode1()
+        let engineLoad = LTOBD2PID_ENGINE_LOAD_04.forMode1()
 
         guard let obd2Adapter else {
             fatalError()
         }
         
-        let commands = [rpm, distanceTraveled, fuelRate, coolantTemp, fuelLevel]
+        let commands = [rpm, distanceTraveled, fuelRate, coolantTemp, fuelLevel, engineLoad]
         obd2Adapter.transmitMultipleCommands(commands, completionHandler: { [weak self] commands in
             DispatchQueue.main.async {
                 let rpm = Int(rpm.formattedResponse.replacingOccurrences(of: "\u{202F}rpm", with: ""))
@@ -191,16 +236,19 @@ class ViewController: UIViewController {
                 let fuelRate = Double(fuelRate.formattedResponse.replacingOccurrences(of: "\u{202F}L/h", with: ""))
                 let waterTemp = Int(coolantTemp.formattedResponse.replacingOccurrences(of: "\u{202F}°C", with: ""))
                 let fuelLevel = Double(fuelLevel.formattedResponse.replacingOccurrences(of: "\u{202F}%", with: ""))
+                let engineLoad = Double(engineLoad.formattedResponse.replacingOccurrences(of: "\u{202F}%", with: ""))
                 
                 let obdData = OBDDataPoint(
                     latitude: self?.viewModel.lastKnownLatitude,
                     longitude: self?.viewModel.lastKnownLongitude,
+                    elevation: self?.viewModel.lastKnownElevation,
                     time: Date(),
                     rpm: rpm,
                     distanceReading: distanceReading,
                     fuelRate: fuelRate,
                     waterTemp: waterTemp,
                     fuelLevel: fuelLevel,
+                    engineLoad: engineLoad,
                     baseDistance: self?.viewModel.baseDistance,
                     tankCapacity: self?.viewModel.tankCapacity
                 )
@@ -327,13 +375,61 @@ class ViewController: UIViewController {
             fuelRateLabel.text = obdData.fuelRate == nil ? "<unavailable>" : String(obdData.fuelRate!) + " L/h"
             waterTempLabel.text = obdData.waterTemp == nil ? "<unavailable>" : String(obdData.waterTemp!) + " °C"
             fuelInTankLabel.text = obdData.fuelInTank == nil ? "<unavailable>" : String(obdData.fuelInTank!) + " L"
+            engineLoadLabel.text = obdData.engineLoad == nil ? "<unavailable>" : String(obdData.engineLoad!) + "%"
         } else {
             rpmLabel.text = "<unavailable>"
             odometerLabel.text = "<unavailable>"
             fuelRateLabel.text = "<unavailable>"
             waterTempLabel.text = "<unavailable>"
             fuelInTankLabel.text = "<unavailable>"
+            engineLoadLabel.text = "<unavailable>"
         }
+    }
+    
+    func saveNewOdometerReading(_ reading: String) {
+        guard let readingInt = Int(reading) else {
+            // show error alert
+            let alert = UIAlertController(title: "Error", message: "Invalid Odometer Reading -- please only enter numbers", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            present(alert, animated: true)
+            return
+        }
+        
+        let obdDistance = viewModel.obdData?.distanceReading ?? 0
+        let newBaseDistance = Double(readingInt) - obdDistance
+        viewModel.baseDistance = newBaseDistance
+        savedBaseDistance = newBaseDistance
+    }
+    
+    @IBAction func changeBaseOdometerTapped() {
+        if odometerTextField.isHidden {
+            odometerTextField.isHidden = false
+            odometerLabel.isHidden = true
+            odometerTextField.text = String(viewModel.obdData?.distanceReading ?? savedBaseDistance)
+            odometerTextField.selectAll(nil)
+            odometerTextField.becomeFirstResponder()
+            odometerActionButton.setTitle("Save", for: .normal)
+            odometerCancelButton.isHidden = false
+        } else {
+            odometerLabel.isHidden = false
+            odometerTextField.isHidden = true
+            odometerActionButton.setTitle("Change", for: .normal)
+            odometerCancelButton.isHidden = true
+            saveNewOdometerReading(odometerTextField.text ?? "")
+            odometerTextField.endEditing(true)
+        }
+    }
+    
+    @IBAction func cancelOdometerChangesTapped() {
+        if odometerTextField.isHidden {
+            return
+        }
+        
+        odometerLabel.isHidden = false
+        odometerTextField.isHidden = true
+        odometerActionButton.setTitle("Change", for: .normal)
+        odometerCancelButton.isHidden = true
+        odometerTextField.endEditing(true)
     }
 }
 
@@ -354,9 +450,9 @@ extension ViewController: UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == tankCapacityField {
-            tankCapacity = Double(textField.text ?? "") ?? tankCapacity
-            viewModel.tankCapacity = tankCapacity
-            textField.text = String(tankCapacity)
+            savedTankCapacity = Double(textField.text ?? "") ?? savedTankCapacity
+            viewModel.tankCapacity = savedTankCapacity
+            textField.text = String(savedTankCapacity)
             textField.endEditing(true)
         }
         
@@ -372,6 +468,7 @@ extension ViewController: CLLocationManagerDelegate {
         
         viewModel.lastKnownLatitude = location.coordinate.latitude
         viewModel.lastKnownLongitude = location.coordinate.longitude
+        viewModel.lastKnownElevation = location.altitude
         print("new location:", location.coordinate)
     }
     

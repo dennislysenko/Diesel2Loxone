@@ -11,13 +11,6 @@ import LTSupportAutomotive
 import AVFoundation
 import CoreLocation
 
-
-//class LTOBD2PID_ODOMETER_A6: LTOBD2PID {
-//    override var formattedResponse: String {
-//        
-//    }
-//}
-
 import CoreLocation
 
 struct ViewModel {
@@ -52,8 +45,8 @@ class ViewController: UIViewController {
     @UserDefault(key: "tankCapacity_", defaultValue: 50)
     var savedTankCapacity: Double
     
-    @UserDefault(key: "baseDistance_", defaultValue: 0)
-    var savedBaseDistance: Double
+//    @UserDefault(key: "baseDistance__", defaultValue: 0)
+//    var savedBaseDistance: Double
     
     let locationManager = CLLocationManager()
     
@@ -125,11 +118,11 @@ class ViewController: UIViewController {
 
         // load saved defaults
         viewModel.tankCapacity = savedTankCapacity
-        viewModel.baseDistance = savedBaseDistance
+//        viewModel.baseDistance = savedBaseDistance
         bind(viewModel)
 
         tankCapacityField.text = String(savedTankCapacity)
-        odometerTextField.text = String(savedBaseDistance)
+//        odometerTextField.text = String(savedBaseDistance)
 
         // set up background audio playback
         setupAudioPlayer()
@@ -140,10 +133,7 @@ class ViewController: UIViewController {
                                                object: AVAudioSession.sharedInstance())
         
         NotificationCenter.default.addObserver(self, selector: #selector(onAdapterChangedState), name: NSNotification.Name(rawValue: LTOBD2AdapterDidUpdateState), object: nil)
-        
-        // connect to adapter on launch and anytime we return from background
-        connectToAdapter()
-        
+
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         // get keyboard show/hide notifications
@@ -152,6 +142,7 @@ class ViewController: UIViewController {
     }
     
     @objc func applicationDidBecomeActive() {
+        // gets called on first open as well, this is where the first connection happens
         connectToAdapter()
     }
     
@@ -218,21 +209,22 @@ class ViewController: UIViewController {
     // updates sensor data in a loop
     func updateSensorData() {
         let rpm = LTOBD2PID_ENGINE_RPM_0C.forMode1()
-        let distanceTraveled = LTOBD2PID_DISTANCE_SINCE_DTC_CLEARED_31.forMode1()
         let fuelRate = LTOBD2PID_ENGINE_FUEL_RATE_5E.forMode1()
         let coolantTemp = LTOBD2PID_COOLANT_TEMP_05.forMode1()
         let fuelLevel = LTOBD2PID_FUEL_TANK_LEVEL_2F.forMode1()
         let engineLoad = LTOBD2PID_ENGINE_LOAD_04.forMode1()
+        let odometer = LTOBD2PID_ODOMETER_A6.forMode1()
 
         guard let obd2Adapter else {
             fatalError()
         }
         
-        let commands = [rpm, distanceTraveled, fuelRate, coolantTemp, fuelLevel, engineLoad]
+        let commands = [rpm, odometer, fuelRate, coolantTemp, fuelLevel, engineLoad]
         obd2Adapter.transmitMultipleCommands(commands, completionHandler: { [weak self] commands in
             DispatchQueue.main.async {
                 let rpm = Int(rpm.formattedResponse.replacingOccurrences(of: "\u{202F}rpm", with: ""))
-                let distanceReading = Double(distanceTraveled.formattedResponse.replacingOccurrences(of: "\u{202F}km", with: ""))
+                // let distanceReading = Double(distanceTraveled.formattedResponse.replacingOccurrences(of: "\u{202F}km", with: ""))
+                let odometerReading = Double(odometer.formattedResponse.replacingOccurrences(of: "\u{202F}km", with: ""))
                 let fuelRate = Double(fuelRate.formattedResponse.replacingOccurrences(of: "\u{202F}L/h", with: ""))
                 let waterTemp = Int(coolantTemp.formattedResponse.replacingOccurrences(of: "\u{202F}°C", with: ""))
                 let fuelLevel = Double(fuelLevel.formattedResponse.replacingOccurrences(of: "\u{202F}%", with: ""))
@@ -244,12 +236,13 @@ class ViewController: UIViewController {
                     elevation: self?.viewModel.lastKnownElevation,
                     time: Date(),
                     rpm: rpm,
-                    distanceReading: distanceReading,
+//                    distanceReading: odometer,
                     fuelRate: fuelRate,
                     waterTemp: waterTemp,
                     fuelLevel: fuelLevel,
                     engineLoad: engineLoad,
-                    baseDistance: self?.viewModel.baseDistance,
+                    odometerReading: odometerReading,
+//                    baseDistance: self?.viewModel.baseDistance,
                     tankCapacity: self?.viewModel.tankCapacity
                 )
                 
@@ -387,7 +380,7 @@ class ViewController: UIViewController {
     }
     
     func saveNewOdometerReading(_ reading: String) {
-        guard let readingInt = Int(reading) else {
+        guard let readingNumber = Double(reading) else {
             // show error alert
             let alert = UIAlertController(title: "Error", message: "Invalid Odometer Reading -- please only enter numbers", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
@@ -395,17 +388,17 @@ class ViewController: UIViewController {
             return
         }
         
-        let obdDistance = viewModel.obdData?.distanceReading ?? 0
-        let newBaseDistance = Double(readingInt) - obdDistance
-        viewModel.baseDistance = newBaseDistance
-        savedBaseDistance = newBaseDistance
+//        let obdDistance = viewModel.obdData?.distanceReading ?? 0
+//        let newBaseDistance = readingNumber - obdDistance
+//        viewModel.baseDistance = newBaseDistance
+//        savedBaseDistance = newBaseDistance
     }
     
     @IBAction func changeBaseOdometerTapped() {
         if odometerTextField.isHidden {
             odometerTextField.isHidden = false
             odometerLabel.isHidden = true
-            odometerTextField.text = String(viewModel.obdData?.distanceReading ?? savedBaseDistance)
+//            odometerTextField.text = String(viewModel.obdData?.distanceReading ?? savedBaseDistance)
             odometerTextField.selectAll(nil)
             odometerTextField.becomeFirstResponder()
             odometerActionButton.setTitle("Save", for: .normal)

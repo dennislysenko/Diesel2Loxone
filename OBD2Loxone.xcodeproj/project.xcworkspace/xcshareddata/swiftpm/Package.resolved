@@ -1,5 +1,5 @@
 {
-  "originHash" : "5cda8f95adbcb900e3513931f08d64c0ad737e6209da031d080707737543332e",
+  "originHash" : "fd992bda60a5a9b56eeee12ddde4b41fb8166fc4ad47a74a4af7e7669fd0e501",
   "pins" : [
     {
       "identity" : "gcdwebserver",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "c2f837b30038ef716b77225f40cc8d104b6ff645",
         "version" : "3.5.7"
-      }
-    },
-    {
-      "identity" : "ltsupportautomotive",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mickeyl/LTSupportAutomotive",
-      "state" : {
-        "revision" : "571396017a3ecc36b04831e2a86a06a8efce265f",
-        "version" : "1.0.1"
       }
     }
   ],

@@ -29,5 +29,20 @@
 		<string>location</string>
 		<string>voip</string>
 	</array>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+      <key>NSAllowsArbitraryLoads</key>
+      <false/>
+      <key>NSExceptionDomains</key>
+      <dict>
+        <key>dns.loxonecloud.com</key>
+        <dict>
+          <key>NSIncludesSubdomains</key>
+          <true/>
+          <key>NSExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+        </dict>
+      </dict>
+    </dict>
 </dict>
 </plist>

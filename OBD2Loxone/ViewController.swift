@@ -10,8 +10,7 @@ import GCDWebServer
 import LTSupportAutomotive
 import AVFoundation
 import CoreLocation
-
-import CoreLocation
+import OSLog
 
 struct ViewModel {
     var isServerRunning = false
@@ -68,12 +67,56 @@ class ViewController: UIViewController {
     @IBOutlet weak var odometerActionButton: UIButton!
     @IBOutlet weak var odometerCancelButton: UIButton!
     
+    @IBOutlet weak var spareTankLabel: UILabel!
+    @IBOutlet weak var miniserverTextField: UITextField!
+    @IBOutlet weak var miniserverActionButton: UIButton!
+    @IBOutlet weak var miniserverCancelButton: UIButton!
+    
     @IBOutlet weak var fuelRateLabel: UILabel!
     @IBOutlet weak var engineLoadLabel: UILabel!
     @IBOutlet weak var fuelInTankLabel: UILabel!
+    
+    var miniserverTimer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let logStore = try! OSLogStore(scope: .currentProcessIdentifier)
+            
+        // Define a time interval (e.g., the last hour)
+        let oneHourAgo = Date().addingTimeInterval(-3600)
+        let dateInterval = DateInterval(start: oneHourAgo, end: Date())
+        
+        let subsystem = "com.ltsupportautomotive.log"
+        let predicate = NSPredicate(format: "subsystem == %@", subsystem)
+        
+        // Retrieve log entries
+        let entries = try! logStore.getEntries()
+        
+        // Process and format the entries into a string
+        let logMessages = entries.map { entry -> String in
+            let dateFormatter = ISO8601DateFormatter()
+            let timestamp = dateFormatter.string(from: entry.date)
+            return "\(timestamp): \(entry.composedMessage)"
+        }.joined(separator: "\n")
+        
+        
+        // Now `logMessages` contains your formatted log entries
+        // Next, you would write this string to a file to share
+        if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let logFileUrl = documentDirectory.appendingPathComponent("appLogs.txt")
+            try? logMessages.write(to: logFileUrl, atomically: true, encoding: .utf8)
+            
+            // Share the file using UIActivityViewController
+            // Ensure this is called on the main thread, e.g., within a UIViewController
+            DispatchQueue.main.async {
+                let activityViewController = UIActivityViewController(activityItems: [logFileUrl], applicationActivities: nil)
+                self.present(activityViewController, animated: true, completion: nil)
+            }
+        } else {
+            print("nope")
+        }
+
         
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
@@ -134,17 +177,23 @@ class ViewController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(onAdapterChangedState), name: NSNotification.Name(rawValue: LTOBD2AdapterDidUpdateState), object: nil)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
+        // connect to adapter automatically only on first launch.
+        connectToAdapter()
+
+//        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         // get keyboard show/hide notifications
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        
+        miniserverTimer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(pollMiniserver), userInfo: nil, repeats: true)
+        pollMiniserver()
     }
     
-    @objc func applicationDidBecomeActive() {
-        // gets called on first open as well, this is where the first connection happens
-        connectToAdapter()
-    }
+//    @objc func applicationDidBecomeActive() {
+//        // gets called on first open as well, this is where the first connection happens
+//        connectToAdapter()
+//    }
     
     @objc func keyboardWillShow(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
@@ -204,6 +253,12 @@ class ViewController: UIViewController {
     func disconnectAdapter() {
         obd2Adapter?.disconnect()
         transporter?.disconnect()
+    }
+    
+    @objc func pollMiniserver() {
+        if !LoxoneService.shared.isFetching {
+            LoxoneService.shared.fetchSpareTankValue()
+        }
     }
     
     // updates sensor data in a loop
@@ -354,6 +409,10 @@ class ViewController: UIViewController {
         }
     }
     
+    func setNewMiniserverURL(_ url: String) {
+        LoxoneService.shared.miniserverURL = url
+    }
+    
     func bind(_ viewModel: ViewModel) {
         serverStatusLabel.text = viewModel.isServerRunning ? "Running" : "Not Running"
         serverAddressLabel.text = webServer.serverURL?.absoluteString ?? "<unavailable>"
@@ -424,6 +483,41 @@ class ViewController: UIViewController {
         odometerCancelButton.isHidden = true
         odometerTextField.endEditing(true)
     }
+    
+    @IBAction func changeMiniserverTapped() {
+        if miniserverTextField.isHidden {
+            miniserverTextField.isHidden = false
+            spareTankLabel.isHidden = true
+//            spareTankLabel.text = String(viewModel.obdData?.distanceReading ?? savedBaseDistance)
+            miniserverTextField.selectAll(nil)
+            miniserverTextField.becomeFirstResponder()
+            miniserverActionButton.setTitle("Save", for: .normal)
+            miniserverCancelButton.isHidden = false
+        } else {
+            spareTankLabel.isHidden = false
+            miniserverTextField.isHidden = true
+            miniserverActionButton.setTitle("Change", for: .normal)
+            miniserverCancelButton.isHidden = true
+            setNewMiniserverURL(miniserverTextField.text ?? "")
+            miniserverTextField.endEditing(true)
+        }
+    }
+    
+    @IBAction func cancelMiniserverChangesTapped() {
+        if miniserverTextField.isHidden {
+            return
+        }
+        
+        spareTankLabel.isHidden = false
+        miniserverTextField.isHidden = true
+        miniserverActionButton.setTitle("Change", for: .normal)
+        miniserverCancelButton.isHidden = true
+        miniserverTextField.endEditing(true)
+    }
+    
+    @IBAction func reconnectTapped() {
+        self.connectToAdapter()
+    }
 }
 
 extension ViewController: GCDWebServerDelegate {
@@ -462,7 +556,7 @@ extension ViewController: CLLocationManagerDelegate {
         viewModel.lastKnownLatitude = location.coordinate.latitude
         viewModel.lastKnownLongitude = location.coordinate.longitude
         viewModel.lastKnownElevation = location.altitude
-        print("new location:", location.coordinate)
+//        print("new location:", location.coordinate)
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -479,4 +573,3 @@ extension ViewController: CLLocationManagerDelegate {
     }
 
 }
-

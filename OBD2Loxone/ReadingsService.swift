@@ -7,6 +7,26 @@
 
 import Foundation
 
+class EntriesService {
+    static let shared = EntriesService()
+    private init() {}
+    
+    // Always in a stable descending order (most recent first)
+    @UserDefault(key: "entries", defaultValue: []) var entries: [Entry]
+    
+    struct Entry: Codable {
+        let tankInfo: TankInfo
+        let id: String
+        let time: Date
+    }
+    
+    func log(tankInfo: TankInfo) {
+        let entry = Entry(tankInfo: tankInfo, id: UUID().uuidString, time: Date())
+        assert(Thread.isMainThread)
+        entries.insert(entry, at: 0)
+    }
+}
+
 class ReadingsService {
     static let shared = ReadingsService()
     private init() {}

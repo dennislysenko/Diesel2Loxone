@@ -28,6 +28,14 @@ struct ViewModel {
     var tankCapacity: Double?
     
     var obdData: OBDDataPoint?
+    
+    var tankInfo: TankInfo?
+}
+
+struct TankInfo: Codable {
+    var mainTankLevel: Double?
+    var auxTankLevel: Double?
+    var price: Double?
 }
 
 class ViewController: UIViewController {
@@ -43,6 +51,15 @@ class ViewController: UIViewController {
     
     @UserDefault(key: "tankCapacity_", defaultValue: 50)
     var savedTankCapacity: Double
+    
+    @UserDefault(key: "mainTankLevel", defaultValue: 10)
+    var savedMainTankLevel: Double
+    
+    @UserDefault(key: "auxTankLevel", defaultValue: 10)
+    var savedAuxTankLevel: Double
+    
+    @UserDefault(key: "gasPrice", defaultValue: 5.50)
+    var savedPrice: Double
     
 //    @UserDefault(key: "baseDistance__", defaultValue: 0)
 //    var savedBaseDistance: Double
@@ -76,47 +93,14 @@ class ViewController: UIViewController {
     @IBOutlet weak var engineLoadLabel: UILabel!
     @IBOutlet weak var fuelInTankLabel: UILabel!
     
+    @IBOutlet weak var mainTankLevelField: UITextField!
+    @IBOutlet weak var auxTankLevelField: UITextField!
+    @IBOutlet weak var priceField: UITextField!
+    
     var miniserverTimer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let logStore = try! OSLogStore(scope: .currentProcessIdentifier)
-            
-        // Define a time interval (e.g., the last hour)
-        let oneHourAgo = Date().addingTimeInterval(-3600)
-        let dateInterval = DateInterval(start: oneHourAgo, end: Date())
-        
-        let subsystem = "com.ltsupportautomotive.log"
-        let predicate = NSPredicate(format: "subsystem == %@", subsystem)
-        
-        // Retrieve log entries
-        let entries = try! logStore.getEntries()
-        
-        // Process and format the entries into a string
-        let logMessages = entries.map { entry -> String in
-            let dateFormatter = ISO8601DateFormatter()
-            let timestamp = dateFormatter.string(from: entry.date)
-            return "\(timestamp): \(entry.composedMessage)"
-        }.joined(separator: "\n")
-        
-        
-        // Now `logMessages` contains your formatted log entries
-        // Next, you would write this string to a file to share
-        if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let logFileUrl = documentDirectory.appendingPathComponent("appLogs.txt")
-            try? logMessages.write(to: logFileUrl, atomically: true, encoding: .utf8)
-            
-            // Share the file using UIActivityViewController
-            // Ensure this is called on the main thread, e.g., within a UIViewController
-            DispatchQueue.main.async {
-                let activityViewController = UIActivityViewController(activityItems: [logFileUrl], applicationActivities: nil)
-                self.present(activityViewController, animated: true, completion: nil)
-            }
-        } else {
-            print("nope")
-        }
-
         
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
@@ -155,6 +139,21 @@ class ViewController: UIViewController {
                 "vin": self.viewModel.vin as Any
             ])
         })
+        
+        
+        webServer.addHandler(forMethod: "GET", path: "/levels", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
+            guard let currentEntry = EntriesService.shared.entries.first else {
+                return GCDWebServerDataResponse(jsonObject: ["error": "no entries"])!
+            }
+            
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            guard let jsonData = try? encoder.encode(currentEntry) else {
+                return GCDWebServerDataResponse(jsonObject: ["error": "could not encode codable entry"])!
+            }
+
+            return GCDWebServerDataResponse(data: jsonData, contentType: "application/json")
+        })
 
         // expose web server for requests
         startWebServer()
@@ -164,8 +163,19 @@ class ViewController: UIViewController {
 //        viewModel.baseDistance = savedBaseDistance
         bind(viewModel)
 
-        tankCapacityField.text = String(savedTankCapacity)
+//        tankCapacityField.text = String(savedTankCapacity)
 //        odometerTextField.text = String(savedBaseDistance)
+        
+        
+        
+        mainTankLevelField.text = String(savedMainTankLevel)
+        auxTankLevelField.text = String(savedAuxTankLevel)
+        priceField.text = String(savedPrice)
+        
+        viewModel.tankInfo = TankInfo(mainTankLevel: savedMainTankLevel, auxTankLevel: savedAuxTankLevel, price: savedPrice)
+        
+        
+        
 
         // set up background audio playback
         setupAudioPlayer()
@@ -178,22 +188,14 @@ class ViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(onAdapterChangedState), name: NSNotification.Name(rawValue: LTOBD2AdapterDidUpdateState), object: nil)
 
         // connect to adapter automatically only on first launch.
-        connectToAdapter()
+//        connectToAdapter()
 
 //        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         // get keyboard show/hide notifications
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-        
-        miniserverTimer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(pollMiniserver), userInfo: nil, repeats: true)
-        pollMiniserver()
     }
-    
-//    @objc func applicationDidBecomeActive() {
-//        // gets called on first open as well, this is where the first connection happens
-//        connectToAdapter()
-//    }
     
     @objc func keyboardWillShow(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
@@ -253,12 +255,6 @@ class ViewController: UIViewController {
     func disconnectAdapter() {
         obd2Adapter?.disconnect()
         transporter?.disconnect()
-    }
-    
-    @objc func pollMiniserver() {
-        if !LoxoneService.shared.isFetching {
-            LoxoneService.shared.fetchSpareTankValue()
-        }
     }
     
     // updates sensor data in a loop
@@ -409,10 +405,6 @@ class ViewController: UIViewController {
         }
     }
     
-    func setNewMiniserverURL(_ url: String) {
-        LoxoneService.shared.miniserverURL = url
-    }
-    
     func bind(_ viewModel: ViewModel) {
         serverStatusLabel.text = viewModel.isServerRunning ? "Running" : "Not Running"
         serverAddressLabel.text = webServer.serverURL?.absoluteString ?? "<unavailable>"
@@ -498,7 +490,7 @@ class ViewController: UIViewController {
             miniserverTextField.isHidden = true
             miniserverActionButton.setTitle("Change", for: .normal)
             miniserverCancelButton.isHidden = true
-            setNewMiniserverURL(miniserverTextField.text ?? "")
+//            setNewMiniserverURL(miniserverTextField.text ?? "")
             miniserverTextField.endEditing(true)
         }
     }
@@ -518,6 +510,30 @@ class ViewController: UIViewController {
     @IBAction func reconnectTapped() {
         self.connectToAdapter()
     }
+    
+    @IBAction func getEntryLogTapped() {
+        let entries = EntriesService.shared.entries
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let jsonData = try encoder.encode(entries)
+            let jsonString = String(data: jsonData, encoding: .utf8)
+            
+            
+            print(jsonString ?? "no log")
+            
+            
+            let tempFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("entries.json")
+            try jsonString?.write(to: tempFile, atomically: true, encoding: .utf8)
+            let vc = UIActivityViewController(activityItems: [tempFile], applicationActivities: nil)
+            present(vc, animated: true)
+        } catch let error {
+            print(error)
+            let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            present(alert, animated: true)
+        }
+    }
 }
 
 extension ViewController: GCDWebServerDelegate {
@@ -535,15 +551,31 @@ extension ViewController: UITextFieldDelegate {
         textField.selectAll(nil)
     }
     
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         if textField == tankCapacityField {
             savedTankCapacity = Double(textField.text ?? "") ?? savedTankCapacity
             viewModel.tankCapacity = savedTankCapacity
             textField.text = String(savedTankCapacity)
             textField.endEditing(true)
+        } else if textField == mainTankLevelField {
+            savedMainTankLevel = Double(textField.text ?? "") ?? savedMainTankLevel
+            viewModel.tankInfo!.mainTankLevel = savedMainTankLevel
+            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+            textField.text = String(savedMainTankLevel)
+            textField.endEditing(true)
+        } else if textField == auxTankLevelField {
+            savedAuxTankLevel = Double(textField.text ?? "") ?? savedAuxTankLevel
+            viewModel.tankInfo!.auxTankLevel = savedAuxTankLevel
+            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+            textField.text = String(savedAuxTankLevel)
+            textField.endEditing(true)
+        } else if textField == priceField {
+            savedPrice = Double(textField.text ?? "") ?? savedPrice
+            viewModel.tankInfo!.price = savedPrice
+            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+            textField.text = String(savedPrice)
+            textField.endEditing(true)
         }
-        
-        return true
     }
 }
 

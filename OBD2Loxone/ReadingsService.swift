@@ -12,16 +12,20 @@ class EntriesService {
     private init() {}
     
     // Always in a stable descending order (most recent first)
-    @UserDefault(key: "entries", defaultValue: []) var entries: [Entry]
+    @UserDefault(key: "entries1", defaultValue: []) var entries: [Entry]
     
     struct Entry: Codable {
         let tankInfo: TankInfo
-        let id: String
+        let id: Int
         let time: Date
     }
     
+    var latestId: Int {
+        return entries.first?.id ?? 0
+    }
+    
     func log(tankInfo: TankInfo) {
-        let entry = Entry(tankInfo: tankInfo, id: UUID().uuidString, time: Date())
+        let entry = Entry(tankInfo: tankInfo, id: latestId + 1, time: Date())
         assert(Thread.isMainThread)
         entries.insert(entry, at: 0)
     }

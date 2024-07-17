@@ -35,7 +35,11 @@ struct ViewModel {
 struct TankInfo: Codable {
     var mainTankLevel: Double?
     var auxTankLevel: Double?
-    var price: Double?
+    var mainTankPrice: Double?
+    var mainTankPriceUnit: String?
+    var auxTankPrice: Double?
+    var auxTankPriceUnit: String?
+    var odometer: Double?
 }
 
 class ViewController: UIViewController {
@@ -58,15 +62,31 @@ class ViewController: UIViewController {
     @UserDefault(key: "auxTankLevel", defaultValue: 10)
     var savedAuxTankLevel: Double
     
-    @UserDefault(key: "gasPrice", defaultValue: 5.50)
-    var savedPrice: Double
+    @UserDefault(key: "mainTankPrice", defaultValue: 5.50)
+    var savedMainPrice: Double
     
-//    @UserDefault(key: "baseDistance__", defaultValue: 0)
-//    var savedBaseDistance: Double
+    @UserDefault(key: "auxTankPrice", defaultValue: 5.50)
+    var savedAuxPrice: Double
+    
+    @UserDefault(key: "mainTankPriceUnit", defaultValue: "/gal")
+    var savedMainPriceUnit: String
+    
+    @UserDefault(key: "auxTankPriceUnit", defaultValue: "/gal")
+    var savedAuxPriceUnit: String
+    
+    @UserDefault(key: "odometer", defaultValue: 0)
+    var savedOdometerReading: Double
     
     let locationManager = CLLocationManager()
     
     let readingsService = ReadingsService.shared
+    
+    @IBOutlet var editableFields: [UIControl]!
+    
+    @IBOutlet weak var editButton: UIButton!
+    @IBOutlet weak var saveButton: UIButton!
+    
+    @IBOutlet weak var lastUpdatedLabel: UILabel!
     
     @IBOutlet weak var serverStatusLabel: UILabel!
     @IBOutlet weak var serverAddressLabel: UILabel!
@@ -95,7 +115,11 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var mainTankLevelField: UITextField!
     @IBOutlet weak var auxTankLevelField: UITextField!
-    @IBOutlet weak var priceField: UITextField!
+    @IBOutlet weak var mainPriceField: UITextField!
+    @IBOutlet weak var auxPriceField: UITextField!
+    // price units
+    @IBOutlet weak var mainPriceUnitControl: UISegmentedControl!
+    @IBOutlet weak var auxPriceUnitControl: UISegmentedControl!
     
     var miniserverTimer: Timer?
 
@@ -160,20 +184,34 @@ class ViewController: UIViewController {
 
         // load saved defaults
         viewModel.tankCapacity = savedTankCapacity
-//        viewModel.baseDistance = savedBaseDistance
         bind(viewModel)
 
-//        tankCapacityField.text = String(savedTankCapacity)
-//        odometerTextField.text = String(savedBaseDistance)
-        
-        
-        
+        odometerTextField.text = String(savedOdometerReading)
         mainTankLevelField.text = String(savedMainTankLevel)
         auxTankLevelField.text = String(savedAuxTankLevel)
-        priceField.text = String(savedPrice)
+        mainPriceField.text = String(savedMainPrice)
+        auxPriceField.text = String(savedAuxPrice)
+        mainPriceUnitControl.selectedSegmentIndex = savedMainPriceUnit == "/gal" ? 0 : 1
+        auxPriceUnitControl.selectedSegmentIndex = savedAuxPriceUnit == "/gal" ? 0 : 1
         
-        viewModel.tankInfo = TankInfo(mainTankLevel: savedMainTankLevel, auxTankLevel: savedAuxTankLevel, price: savedPrice)
+        viewModel.tankInfo = TankInfo(
+            mainTankLevel: savedMainTankLevel,
+            auxTankLevel: savedAuxTankLevel,
+            mainTankPrice: savedMainPrice,
+            mainTankPriceUnit: savedMainPriceUnit,
+            auxTankPrice: savedAuxPrice,
+            auxTankPriceUnit: savedAuxPriceUnit,
+            odometer: savedOdometerReading
+        )
         
+        let df = DateFormatter()
+        df.dateFormat = "d MMM, HH:mm"
+        if let lastUpdatedDate = EntriesService.shared.entries.first?.time {
+            lastUpdatedLabel.text = "Last updated: \(df.string(from: lastUpdatedDate))"
+        }
+        
+        editableFields.forEach { $0.isEnabled = false }
+        saveButton.isHidden = true
         
         
 
@@ -495,6 +533,53 @@ class ViewController: UIViewController {
         }
     }
     
+    @IBAction func editTapped() {
+        editableFields.forEach({ $0.isEnabled = true })
+        saveButton.isHidden = false
+        editButton.isHidden = true
+    }
+    
+    @IBAction func saveTapped() {
+        editableFields.forEach({ $0.isEnabled = false })
+        saveButton.isHidden = true
+        editButton.isHidden = false
+    
+        savedMainTankLevel = Double(mainTankLevelField.text ?? "") ?? savedMainTankLevel
+        viewModel.tankInfo!.mainTankLevel = savedMainTankLevel
+        mainTankLevelField.text = String(savedMainTankLevel)
+
+        savedAuxTankLevel = Double(auxTankLevelField.text ?? "") ?? savedAuxTankLevel
+        viewModel.tankInfo!.auxTankLevel = savedAuxTankLevel
+        auxTankLevelField.text = String(savedAuxTankLevel)
+
+        savedMainPrice = Double(mainPriceField.text ?? "") ?? savedMainPrice
+        viewModel.tankInfo!.mainTankPrice = savedMainPrice
+        mainPriceField.text = String(savedMainPrice)
+        
+        savedAuxPrice = Double(auxPriceField.text ?? "") ?? savedAuxPrice
+        viewModel.tankInfo!.auxTankPrice = savedAuxPrice
+        auxPriceField.text = String(savedAuxPrice)
+        
+        savedAuxPriceUnit = auxPriceUnitControl.selectedSegmentIndex == 0 ? "/gal" : "/L"
+        viewModel.tankInfo?.auxTankPriceUnit = savedAuxPriceUnit
+        auxPriceUnitControl.selectedSegmentIndex = savedAuxPriceUnit == "/gal" ? 0 : 1
+        
+        savedMainPriceUnit = mainPriceUnitControl.selectedSegmentIndex == 0 ? "/gal" : "/L"
+        viewModel.tankInfo?.mainTankPriceUnit = savedMainPriceUnit
+        mainPriceUnitControl.selectedSegmentIndex = savedMainPriceUnit == "/gal" ? 0 : 1
+        
+        savedOdometerReading = Double(odometerTextField.text ?? "") ?? savedOdometerReading
+        viewModel.tankInfo?.odometer = savedOdometerReading
+        odometerTextField.text = String(savedOdometerReading)
+        
+        EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+        let df = DateFormatter()
+        df.dateFormat = "d MMM, HH:mm"
+        if let lastUpdatedDate = EntriesService.shared.entries.first?.time {
+            lastUpdatedLabel.text = "Last updated: \(df.string(from: lastUpdatedDate))"
+        }
+    }
+    
     @IBAction func cancelMiniserverChangesTapped() {
         if miniserverTextField.isHidden {
             return
@@ -552,30 +637,32 @@ extension ViewController: UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        if textField == tankCapacityField {
-            savedTankCapacity = Double(textField.text ?? "") ?? savedTankCapacity
-            viewModel.tankCapacity = savedTankCapacity
-            textField.text = String(savedTankCapacity)
-            textField.endEditing(true)
-        } else if textField == mainTankLevelField {
-            savedMainTankLevel = Double(textField.text ?? "") ?? savedMainTankLevel
-            viewModel.tankInfo!.mainTankLevel = savedMainTankLevel
-            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
-            textField.text = String(savedMainTankLevel)
-            textField.endEditing(true)
-        } else if textField == auxTankLevelField {
-            savedAuxTankLevel = Double(textField.text ?? "") ?? savedAuxTankLevel
-            viewModel.tankInfo!.auxTankLevel = savedAuxTankLevel
-            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
-            textField.text = String(savedAuxTankLevel)
-            textField.endEditing(true)
-        } else if textField == priceField {
-            savedPrice = Double(textField.text ?? "") ?? savedPrice
-            viewModel.tankInfo!.price = savedPrice
-            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
-            textField.text = String(savedPrice)
-            textField.endEditing(true)
-        }
+//        if textField == tankCapacityField {
+//            savedTankCapacity = Double(textField.text ?? "") ?? savedTankCapacity
+//            viewModel.tankCapacity = savedTankCapacity
+//            textField.text = String(savedTankCapacity)
+//            textField.endEditing(true)
+//        } else if textField == mainTankLevelField {
+//            savedMainTankLevel = Double(textField.text ?? "") ?? savedMainTankLevel
+//            viewModel.tankInfo!.mainTankLevel = savedMainTankLevel
+//            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+//            textField.text = String(savedMainTankLevel)
+//            textField.endEditing(true)
+//        } else if textField == auxTankLevelField {
+//            savedAuxTankLevel = Double(textField.text ?? "") ?? savedAuxTankLevel
+//            viewModel.tankInfo!.auxTankLevel = savedAuxTankLevel
+//            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+//            textField.text = String(savedAuxTankLevel)
+//            textField.endEditing(true)
+//        } else if textField == priceField {
+//            savedPrice = Double(textField.text ?? "") ?? savedPrice
+//            viewModel.tankInfo!.price = savedPrice
+//            EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+//            textField.text = String(savedPrice)
+//            textField.endEditing(true)
+//        }
+        
+        textField.endEditing(true)
     }
 }
 

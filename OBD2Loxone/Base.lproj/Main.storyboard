@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="ipad7_9" orientation="landscape" layout="fullscreen" appearance="light"/>
+    <device id="ipad7_9" orientation="landscape" layout="fullscreen" appearance="dark"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22684"/>
@@ -18,10 +18,10 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="12" translatesAutoresizingMaskIntoConstraints="NO" id="eUQ-gh-SMl">
-                                <rect key="frame" x="0.0" y="170" width="1133" height="408.5"/>
+                                <rect key="frame" x="0.0" y="176.5" width="1133" height="395"/>
                                 <subviews>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="yrD-4p-NAN" userLabel="Odo Stack">
-                                        <rect key="frame" x="444" y="0.0" width="245" height="34"/>
+                                        <rect key="frame" x="434" y="0.0" width="265" height="34"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Odometer (km)" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vs3-ca-LI6">
                                                 <rect key="frame" x="0.0" y="0.0" width="117" height="34"/>
@@ -30,12 +30,12 @@
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="VDI-5d-Yp6">
-                                                <rect key="frame" x="125" y="0.0" width="120" height="34"/>
+                                                <rect key="frame" x="125" y="0.0" width="140" height="34"/>
                                                 <constraints>
-                                                    <constraint firstAttribute="width" constant="120" id="p2m-yI-Ab2"/>
+                                                    <constraint firstAttribute="width" constant="140" id="p2m-yI-Ab2"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
+                                                <textInputTraits key="textInputTraits" keyboardType="decimalPad"/>
                                                 <userDefinedRuntimeAttributes>
                                                     <userDefinedRuntimeAttribute type="boolean" keyPath="doneAccessory" value="YES"/>
                                                 </userDefinedRuntimeAttributes>
@@ -46,21 +46,21 @@
                                         </subviews>
                                     </stackView>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="ccn-Ek-SJt" userLabel="Main Tank Stack">
-                                        <rect key="frame" x="486" y="46" width="161" height="34"/>
+                                        <rect key="frame" x="433.5" y="46" width="266" height="34"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Main Tank (L)" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7MC-32-Umm">
-                                                <rect key="frame" x="0.0" y="0.0" width="103" height="34"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Main Tank" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7MC-32-Umm">
+                                                <rect key="frame" x="0.0" y="0.0" width="117" height="34"/>
                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="ur1-WM-HoT">
-                                                <rect key="frame" x="111" y="0.0" width="50" height="34"/>
+                                                <rect key="frame" x="125" y="0.0" width="50" height="34"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="50" id="kAX-cm-kMe"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
+                                                <textInputTraits key="textInputTraits" keyboardType="decimalPad"/>
                                                 <userDefinedRuntimeAttributes>
                                                     <userDefinedRuntimeAttribute type="boolean" keyPath="doneAccessory" value="YES"/>
                                                 </userDefinedRuntimeAttributes>
@@ -68,24 +68,31 @@
                                                     <outlet property="delegate" destination="BYZ-38-t0r" id="9Ec-r0-iCT"/>
                                                 </connections>
                                             </textField>
+                                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="aW3-qq-IkC">
+                                                <rect key="frame" x="183" y="0.0" width="83" height="35"/>
+                                                <segments>
+                                                    <segment title="gal"/>
+                                                    <segment title="L"/>
+                                                </segments>
+                                            </segmentedControl>
                                         </subviews>
                                     </stackView>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="2Cd-oO-2VY" userLabel="Aux Tank Stack">
-                                        <rect key="frame" x="490.5" y="92" width="152.5" height="34"/>
+                                        <rect key="frame" x="433.5" y="92" width="266" height="34"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Aux Tank (L)" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8NB-Q5-PvY">
-                                                <rect key="frame" x="0.0" y="0.0" width="94.5" height="34"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Aux Tank" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8NB-Q5-PvY">
+                                                <rect key="frame" x="0.0" y="0.0" width="117" height="34"/>
                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="JTv-qg-M8h">
-                                                <rect key="frame" x="102.5" y="0.0" width="50" height="34"/>
+                                                <rect key="frame" x="125" y="0.0" width="50" height="34"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="50" id="qsX-lr-tsK"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
+                                                <textInputTraits key="textInputTraits" keyboardType="decimalPad"/>
                                                 <userDefinedRuntimeAttributes>
                                                     <userDefinedRuntimeAttribute type="boolean" keyPath="doneAccessory" value="YES"/>
                                                 </userDefinedRuntimeAttributes>
@@ -93,24 +100,31 @@
                                                     <outlet property="delegate" destination="BYZ-38-t0r" id="H7h-Kb-u3p"/>
                                                 </connections>
                                             </textField>
+                                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="AcR-EC-VyM">
+                                                <rect key="frame" x="183" y="0.0" width="83" height="35"/>
+                                                <segments>
+                                                    <segment title="gal"/>
+                                                    <segment title="L"/>
+                                                </segments>
+                                            </segmentedControl>
                                         </subviews>
                                     </stackView>
-                                    <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="EKq-D9-Wrp" userLabel="Main Tank Price">
-                                        <rect key="frame" x="432" y="138" width="269" height="34"/>
+                                    <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="EKq-D9-Wrp" userLabel="Diesel Price">
+                                        <rect key="frame" x="433.5" y="138" width="266" height="34"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Main Tank Price" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2Lq-0Z-PhK">
-                                                <rect key="frame" x="0.0" y="0.0" width="120" height="34"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Diesel Price ($)" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2Lq-0Z-PhK">
+                                                <rect key="frame" x="0.0" y="0.0" width="117" height="34"/>
                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="05Y-Ou-4BJ">
-                                                <rect key="frame" x="128" y="0.0" width="50" height="34"/>
+                                                <rect key="frame" x="125" y="0.0" width="50" height="34"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="50" id="bxa-xv-YUC"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
+                                                <textInputTraits key="textInputTraits" keyboardType="decimalPad"/>
                                                 <userDefinedRuntimeAttributes>
                                                     <userDefinedRuntimeAttribute type="boolean" keyPath="doneAccessory" value="YES"/>
                                                 </userDefinedRuntimeAttributes>
@@ -119,39 +133,7 @@
                                                 </connections>
                                             </textField>
                                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="6cR-IH-j4I">
-                                                <rect key="frame" x="186" y="0.0" width="83" height="35"/>
-                                                <segments>
-                                                    <segment title="/gal"/>
-                                                    <segment title="/L"/>
-                                                </segments>
-                                            </segmentedControl>
-                                        </subviews>
-                                    </stackView>
-                                    <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="ljS-V4-W6D" userLabel="Main Tank Price">
-                                        <rect key="frame" x="436" y="184" width="261" height="34"/>
-                                        <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Aux Tank Price" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2uB-iS-fxx">
-                                                <rect key="frame" x="0.0" y="0.0" width="112" height="34"/>
-                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                <nil key="textColor"/>
-                                                <nil key="highlightedColor"/>
-                                            </label>
-                                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="HsB-Qn-jBx">
-                                                <rect key="frame" x="120" y="0.0" width="50" height="34"/>
-                                                <constraints>
-                                                    <constraint firstAttribute="width" constant="50" id="1W6-ft-rVr"/>
-                                                </constraints>
-                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
-                                                <userDefinedRuntimeAttributes>
-                                                    <userDefinedRuntimeAttribute type="boolean" keyPath="doneAccessory" value="YES"/>
-                                                </userDefinedRuntimeAttributes>
-                                                <connections>
-                                                    <outlet property="delegate" destination="BYZ-38-t0r" id="LHP-vX-pUb"/>
-                                                </connections>
-                                            </textField>
-                                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="3du-B3-ly6">
-                                                <rect key="frame" x="178" y="0.0" width="83" height="35"/>
+                                                <rect key="frame" x="183" y="0.0" width="83" height="35"/>
                                                 <segments>
                                                     <segment title="/gal"/>
                                                     <segment title="/L"/>
@@ -160,13 +142,19 @@
                                         </subviews>
                                     </stackView>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Last Updated: never" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="WvF-Uh-L3d">
-                                        <rect key="frame" x="486.5" y="230" width="160.5" height="20.5"/>
+                                        <rect key="frame" x="486.5" y="184" width="160.5" height="20.5"/>
+                                        <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Loxone Has Not Read" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7Uz-bZ-BeJ">
+                                        <rect key="frame" x="482" y="216.5" width="169" height="20.5"/>
                                         <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="G3o-Lu-JmH">
-                                        <rect key="frame" x="505.5" y="262.5" width="122" height="34.5"/>
+                                        <rect key="frame" x="505.5" y="249" width="122" height="34.5"/>
                                         <subviews>
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZgH-ay-cd6">
                                                 <rect key="frame" x="0.0" y="0.0" width="61" height="34.5"/>
@@ -187,7 +175,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="DCN-6H-xHu" userLabel="Server Status Stack">
-                                        <rect key="frame" x="459.5" y="309" width="214" height="20.5"/>
+                                        <rect key="frame" x="459.5" y="295.5" width="214" height="20.5"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Server Status:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="o5v-6C-Iuy">
                                                 <rect key="frame" x="0.0" y="0.0" width="107.5" height="20.5"/>
@@ -204,7 +192,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="h3G-l0-eww" userLabel="Address Stack">
-                                        <rect key="frame" x="496" y="341.5" width="141" height="20.5"/>
+                                        <rect key="frame" x="496" y="328" width="141" height="20.5"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Address" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Bm-BI-Pbi">
                                                 <rect key="frame" x="0.0" y="0.0" width="62.5" height="20.5"/>
@@ -221,7 +209,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="O7O-IL-RZz" userLabel="Get Logs Stack">
-                                        <rect key="frame" x="502.5" y="374" width="128.5" height="34.5"/>
+                                        <rect key="frame" x="502.5" y="360.5" width="128.5" height="34.5"/>
                                         <subviews>
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VKz-rG-t1Q">
                                                 <rect key="frame" x="0.0" y="0.0" width="128.5" height="34.5"/>
@@ -234,7 +222,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="Shn-sO-T4K" userLabel="BT Status Stack">
-                                        <rect key="frame" x="414.5" y="408.5" width="304.5" height="0.0"/>
+                                        <rect key="frame" x="414.5" y="395" width="304.5" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="BT Status" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yUf-5n-7iE">
                                                 <rect key="frame" x="0.0" y="0.0" width="74.5" height="0.0"/>
@@ -259,7 +247,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="LJK-Z0-CLp" userLabel="Protocol Stack">
-                                        <rect key="frame" x="455.5" y="408.5" width="222.5" height="0.0"/>
+                                        <rect key="frame" x="455.5" y="395" width="222.5" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="OBD Protocol" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aAl-J3-UXn">
                                                 <rect key="frame" x="0.0" y="0.0" width="103.5" height="0.0"/>
@@ -276,7 +264,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="ijk-Ky-Tl5" userLabel="VIN Stack">
-                                        <rect key="frame" x="493.5" y="408.5" width="146.5" height="0.0"/>
+                                        <rect key="frame" x="493.5" y="395" width="146.5" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="VIN" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8HW-mr-f7G">
                                                 <rect key="frame" x="0.0" y="0.0" width="27.5" height="0.0"/>
@@ -293,7 +281,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="6fs-4Y-EkE" userLabel="RPM Stack">
-                                        <rect key="frame" x="489.5" y="408.5" width="154.5" height="0.0"/>
+                                        <rect key="frame" x="489.5" y="395" width="154.5" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="RPM" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dXg-df-Yby">
                                                 <rect key="frame" x="0.0" y="0.0" width="35.5" height="0.0"/>
@@ -310,7 +298,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="tyX-sh-78m" userLabel="Odometer Stack">
-                                        <rect key="frame" x="468.5" y="408.5" width="196" height="20.5"/>
+                                        <rect key="frame" x="468.5" y="395" width="196" height="20.5"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Odometer" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HbE-yl-4Kl">
                                                 <rect key="frame" x="0.0" y="0.0" width="77" height="20.5"/>
@@ -354,7 +342,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="br2-4d-HbB" userLabel="Water Temp Stack">
-                                        <rect key="frame" x="461" y="408.5" width="211" height="0.0"/>
+                                        <rect key="frame" x="461" y="395" width="211" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Water Temp" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="J2e-uN-Oo0">
                                                 <rect key="frame" x="0.0" y="0.0" width="92" height="0.0"/>
@@ -371,7 +359,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="zlu-7R-Kxy" userLabel="Fuel Rate Stack">
-                                        <rect key="frame" x="418.5" y="408.5" width="296" height="0.0"/>
+                                        <rect key="frame" x="418.5" y="395" width="296" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Fuel Consumption Rate" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0rH-nq-Peg">
                                                 <rect key="frame" x="0.0" y="0.0" width="177" height="0.0"/>
@@ -388,7 +376,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="A4e-Ds-mC7" userLabel="Fuel Rate Stack">
-                                        <rect key="frame" x="460.5" y="408.5" width="212.5" height="0.0"/>
+                                        <rect key="frame" x="460.5" y="395" width="212.5" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Engine Load" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uxf-rV-YF0">
                                                 <rect key="frame" x="0.0" y="0.0" width="93.5" height="0.0"/>
@@ -405,7 +393,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="J3s-oF-SbF" userLabel="Fuel Left Stack">
-                                        <rect key="frame" x="474" y="408.5" width="185" height="0.0"/>
+                                        <rect key="frame" x="474" y="395" width="185" height="0.0"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Fuel Left" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="s8Y-gc-QSw">
                                                 <rect key="frame" x="0.0" y="0.0" width="66" height="0.0"/>
@@ -422,7 +410,7 @@
                                         </subviews>
                                     </stackView>
                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="aA3-QZ-Eau" userLabel="Spare Tank Stack">
-                                        <rect key="frame" x="431" y="408.5" width="271.5" height="20.5"/>
+                                        <rect key="frame" x="431" y="395" width="271.5" height="20.5"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Spare Level" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lep-tF-xMq">
                                                 <rect key="frame" x="0.0" y="0.0" width="88.5" height="20.5"/>
@@ -468,6 +456,13 @@
                                         </subviews>
                                     </stackView>
                                 </subviews>
+                                <constraints>
+                                    <constraint firstItem="vs3-ca-LI6" firstAttribute="width" secondItem="2Lq-0Z-PhK" secondAttribute="width" id="F9W-Ob-vUv"/>
+                                    <constraint firstItem="2Lq-0Z-PhK" firstAttribute="width" secondItem="7MC-32-Umm" secondAttribute="width" id="OXj-bs-zCh"/>
+                                    <constraint firstItem="aW3-qq-IkC" firstAttribute="width" secondItem="6cR-IH-j4I" secondAttribute="width" id="iW4-Ga-iL8"/>
+                                    <constraint firstItem="2Lq-0Z-PhK" firstAttribute="width" secondItem="8NB-Q5-PvY" secondAttribute="width" id="nH0-IL-lTW"/>
+                                    <constraint firstItem="AcR-EC-VyM" firstAttribute="width" secondItem="6cR-IH-j4I" secondAttribute="width" id="oAS-fS-IXD"/>
+                                </constraints>
                             </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
@@ -479,8 +474,7 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="auxPriceField" destination="HsB-Qn-jBx" id="drH-GX-kjY"/>
-                        <outlet property="auxPriceUnitControl" destination="3du-B3-ly6" id="NYc-nW-5qd"/>
+                        <outlet property="auxLevelUnitControl" destination="AcR-EC-VyM" id="fxD-Po-Wer"/>
                         <outlet property="auxTankLevelField" destination="JTv-qg-M8h" id="yA1-Fs-rb6"/>
                         <outlet property="deviceStatusLabel" destination="eHO-7D-2ix" id="WqL-Bm-TCo"/>
                         <outlet property="editButton" destination="ZgH-ay-cd6" id="Yya-eB-w97"/>
@@ -488,6 +482,8 @@
                         <outlet property="fuelInTankLabel" destination="Avx-bk-5GB" id="5CE-9r-xw6"/>
                         <outlet property="fuelRateLabel" destination="GYH-Fs-XhE" id="yjN-hJ-P9Q"/>
                         <outlet property="lastUpdatedLabel" destination="WvF-Uh-L3d" id="02w-Is-gWZ"/>
+                        <outlet property="loxoneAckLabel" destination="7Uz-bZ-BeJ" id="hLC-4h-UJQ"/>
+                        <outlet property="mainLevelUnitControl" destination="aW3-qq-IkC" id="ARj-Y0-bsS"/>
                         <outlet property="mainPriceField" destination="05Y-Ou-4BJ" id="Hhd-FO-wZZ"/>
                         <outlet property="mainPriceUnitControl" destination="6cR-IH-j4I" id="7mq-M7-LAc"/>
                         <outlet property="mainTankLevelField" destination="ur1-WM-HoT" id="AVv-gI-kdn"/>
@@ -510,9 +506,9 @@
                         <outletCollection property="editableFields" destination="ur1-WM-HoT" collectionClass="NSMutableArray" id="Kts-Sh-Ayf"/>
                         <outletCollection property="editableFields" destination="JTv-qg-M8h" collectionClass="NSMutableArray" id="Roo-uv-k41"/>
                         <outletCollection property="editableFields" destination="05Y-Ou-4BJ" collectionClass="NSMutableArray" id="qD2-9g-8ve"/>
-                        <outletCollection property="editableFields" destination="HsB-Qn-jBx" collectionClass="NSMutableArray" id="AfH-Bd-O4u"/>
                         <outletCollection property="editableFields" destination="6cR-IH-j4I" collectionClass="NSMutableArray" id="WBV-Bf-Clw"/>
-                        <outletCollection property="editableFields" destination="3du-B3-ly6" collectionClass="NSMutableArray" id="D3w-th-N78"/>
+                        <outletCollection property="editableFields" destination="aW3-qq-IkC" collectionClass="NSMutableArray" id="UiQ-5m-MyG"/>
+                        <outletCollection property="editableFields" destination="AcR-EC-VyM" collectionClass="NSMutableArray" id="bIe-sq-TSF"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

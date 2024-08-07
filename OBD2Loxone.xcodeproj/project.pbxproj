@@ -327,6 +327,7 @@
 				DEVELOPMENT_TEAM = WD4M48K2YF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OBD2Loxone/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Diesel2Loxone;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to OBD2 Adapter";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "To track GPS data points";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To track GPS data points";
@@ -359,6 +360,7 @@
 				DEVELOPMENT_TEAM = WD4M48K2YF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OBD2Loxone/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Diesel2Loxone;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect to OBD2 Adapter";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "To track GPS data points";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To track GPS data points";

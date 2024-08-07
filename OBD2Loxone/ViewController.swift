@@ -32,14 +32,86 @@ struct ViewModel {
     var tankInfo: TankInfo?
 }
 
+let isoDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" // ISO 8601 with timezone
+    formatter.timeZone = TimeZone.current
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    return formatter
+}()
+
+// Extend JSONEncoder to include the custom date encoding strategy
+extension JSONEncoder {
+    static func isoDateEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .formatted(isoDateFormatter)
+        return encoder
+    }
+}
+
+
 struct TankInfo: Codable {
     var mainTankLevel: Double?
     var auxTankLevel: Double?
+    var mainTankLevelUnit: String?
+    var auxTankLevelUnit: String?
     var mainTankPrice: Double?
     var mainTankPriceUnit: String?
-    var auxTankPrice: Double?
-    var auxTankPriceUnit: String?
     var odometer: Double?
+}
+
+struct TankDisplayInfo: Codable {
+    var mainTankLevelLiters: Double?
+    var auxTankLevelLiters: Double?
+    var pricePerLiter: Double?
+    var odometer: Double?
+    
+    init(from tankInfo: TankInfo) {
+        if let mainTankLevel = tankInfo.mainTankLevel {
+            if tankInfo.mainTankLevelUnit == "L" {
+                mainTankLevelLiters = mainTankLevel
+            } else {
+                // gallons to liters
+                mainTankLevelLiters = mainTankLevel * 3.785
+            }
+        }
+        
+        if let auxTankLevel = tankInfo.auxTankLevel {
+            if tankInfo.auxTankLevelUnit == "L" {
+                auxTankLevelLiters = auxTankLevel
+            } else {
+                // gallon to liters
+                auxTankLevelLiters = auxTankLevel * 3.785
+            }
+        }
+
+        if let price = tankInfo.mainTankPrice {
+            if tankInfo.mainTankPriceUnit == "/L" {
+                pricePerLiter = price
+            } else {
+                // $/gal to $/L
+                pricePerLiter = price / 3.785
+            }
+        }
+
+        odometer = tankInfo.odometer
+    }
+}
+
+struct DisplayEntry: Codable {
+    let tankInfo: TankDisplayInfo
+    let id: Int
+    let time: Date
+    
+    init(from entry: EntriesService.Entry) {
+        tankInfo = TankDisplayInfo(from: entry.tankInfo)
+        id = entry.id
+        time = entry.time
+    }
+}
+
+struct HasNewReadingResponse: Codable {
+    let status: Int
 }
 
 class ViewController: UIViewController {
@@ -62,22 +134,25 @@ class ViewController: UIViewController {
     @UserDefault(key: "auxTankLevel", defaultValue: 10)
     var savedAuxTankLevel: Double
     
+    @UserDefault(key: "mainTankLevelUnit", defaultValue: "gal")
+    var savedMainLevelUnit: String
+    
+    @UserDefault(key: "auxTankLevelUnit", defaultValue: "gal")
+    var savedAuxLevelUnit: String
+    
     @UserDefault(key: "mainTankPrice", defaultValue: 5.50)
     var savedMainPrice: Double
-    
-    @UserDefault(key: "auxTankPrice", defaultValue: 5.50)
-    var savedAuxPrice: Double
     
     @UserDefault(key: "mainTankPriceUnit", defaultValue: "/gal")
     var savedMainPriceUnit: String
     
-    @UserDefault(key: "auxTankPriceUnit", defaultValue: "/gal")
-    var savedAuxPriceUnit: String
-    
     @UserDefault(key: "odometer", defaultValue: 0)
     var savedOdometerReading: Double
     
-    let locationManager = CLLocationManager()
+    @UserDefault(key: "hasNewReading", defaultValue: false)
+    var hasNewReading: Bool
+    
+//    let locationManager = CLLocationManager()
     
     let readingsService = ReadingsService.shared
     
@@ -87,6 +162,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var saveButton: UIButton!
     
     @IBOutlet weak var lastUpdatedLabel: UILabel!
+    @IBOutlet weak var loxoneAckLabel: UILabel!
     
     @IBOutlet weak var serverStatusLabel: UILabel!
     @IBOutlet weak var serverAddressLabel: UILabel!
@@ -115,6 +191,9 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var mainTankLevelField: UITextField!
     @IBOutlet weak var auxTankLevelField: UITextField!
+    @IBOutlet weak var mainLevelUnitControl: UISegmentedControl!
+    @IBOutlet weak var auxLevelUnitControl: UISegmentedControl!
+    
     @IBOutlet weak var mainPriceField: UITextField!
     @IBOutlet weak var auxPriceField: UITextField!
     // price units
@@ -122,20 +201,24 @@ class ViewController: UIViewController {
     @IBOutlet weak var auxPriceUnitControl: UISegmentedControl!
     
     var miniserverTimer: Timer?
+    
+    let dynamicBackgroundColor = UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? .black : .white
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.pausesLocationUpdatesAutomatically = false
-        locationManager.allowsBackgroundLocationUpdates = true
-
-        locationManager.requestAlwaysAuthorization()
-        
-        if CLLocationManager.authorizationStatus() == .authorizedAlways || CLLocationManager.authorizationStatus() == .authorizedWhenInUse {
-            locationManager.startUpdatingLocation()
-        }
+//        locationManager.delegate = self
+//        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+//        locationManager.pausesLocationUpdatesAutomatically = false
+//        locationManager.allowsBackgroundLocationUpdates = true
+//
+//        locationManager.requestAlwaysAuthorization()
+//        
+//        if CLLocationManager.authorizationStatus() == .authorizedAlways || CLLocationManager.authorizationStatus() == .authorizedWhenInUse {
+//            locationManager.startUpdatingLocation()
+//        }
         
         webServer.delegate = self
         webServer.addHandler(forMethod: "GET", path: "/readings", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
@@ -143,8 +226,7 @@ class ViewController: UIViewController {
                 fatalError()
             }
 
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
+            let encoder = JSONEncoder.isoDateEncoder()
             
             let pastFiveMinsOBDData = readingsService.getPast5MinutesOfReadings()
             
@@ -170,14 +252,43 @@ class ViewController: UIViewController {
                 return GCDWebServerDataResponse(jsonObject: ["error": "no entries"])!
             }
             
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            guard let jsonData = try? encoder.encode(currentEntry) else {
+            let encoder = JSONEncoder.isoDateEncoder()
+            guard let jsonData = try? encoder.encode(DisplayEntry(from: currentEntry)) else {
                 return GCDWebServerDataResponse(jsonObject: ["error": "could not encode codable entry"])!
             }
 
             return GCDWebServerDataResponse(data: jsonData, contentType: "application/json")
         })
+        
+        webServer.addHandler(forMethod: "GET", path: "/has_new_reading", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
+            guard let self = self else {
+                fatalError()
+            }
+            
+            let hasNewReadingResponse = HasNewReadingResponse(status: hasNewReading ? 1 : 0)
+            
+            let encoder = JSONEncoder()
+            guard let jsonData = try? encoder.encode(hasNewReadingResponse) else {
+                return GCDWebServerDataResponse(jsonObject: ["error": "could not encode codable entry"])!
+            }
+            
+            return GCDWebServerDataResponse(data: jsonData, contentType: "application/json")
+        })
+        
+        webServer.addHandler(forMethod: "GET", path: "/consume_new_reading", request: GCDWebServerRequest.self, processBlock: { [weak self] request in
+            guard let self = self else {
+                fatalError()
+            }
+            
+            hasNewReading = false
+            DispatchQueue.main.async {
+                self.loxoneAckLabel.text = "No New Reading"
+            }
+            
+            return GCDWebServerResponse(statusCode: 200)
+        })
+        
+        
 
         // expose web server for requests
         startWebServer()
@@ -190,17 +301,17 @@ class ViewController: UIViewController {
         mainTankLevelField.text = String(savedMainTankLevel)
         auxTankLevelField.text = String(savedAuxTankLevel)
         mainPriceField.text = String(savedMainPrice)
-        auxPriceField.text = String(savedAuxPrice)
         mainPriceUnitControl.selectedSegmentIndex = savedMainPriceUnit == "/gal" ? 0 : 1
-        auxPriceUnitControl.selectedSegmentIndex = savedAuxPriceUnit == "/gal" ? 0 : 1
+        mainLevelUnitControl.selectedSegmentIndex = savedMainLevelUnit == "gal" ? 0 : 1
+        auxLevelUnitControl.selectedSegmentIndex = savedAuxLevelUnit == "gal" ? 0 : 1
         
         viewModel.tankInfo = TankInfo(
             mainTankLevel: savedMainTankLevel,
             auxTankLevel: savedAuxTankLevel,
+            mainTankLevelUnit: savedMainLevelUnit,
+            auxTankLevelUnit: savedAuxLevelUnit,
             mainTankPrice: savedMainPrice,
             mainTankPriceUnit: savedMainPriceUnit,
-            auxTankPrice: savedAuxPrice,
-            auxTankPriceUnit: savedAuxPriceUnit,
             odometer: savedOdometerReading
         )
         
@@ -210,7 +321,12 @@ class ViewController: UIViewController {
             lastUpdatedLabel.text = "Last updated: \(df.string(from: lastUpdatedDate))"
         }
         
-        editableFields.forEach { $0.isEnabled = false }
+        loxoneAckLabel.text = hasNewReading ? "Has New Reading" : "No New Reading"
+        
+        editableFields.forEach { 
+            $0.isEnabled = false
+            $0.backgroundColor = .clear
+        }
         saveButton.isHidden = true
         
         
@@ -534,13 +650,13 @@ class ViewController: UIViewController {
     }
     
     @IBAction func editTapped() {
-        editableFields.forEach({ $0.isEnabled = true })
+        editableFields.forEach({ $0.isEnabled = true; $0.backgroundColor = dynamicBackgroundColor })
         saveButton.isHidden = false
         editButton.isHidden = true
     }
     
     @IBAction func saveTapped() {
-        editableFields.forEach({ $0.isEnabled = false })
+        editableFields.forEach({ $0.isEnabled = false; $0.backgroundColor = .clear })
         saveButton.isHidden = true
         editButton.isHidden = false
     
@@ -555,24 +671,28 @@ class ViewController: UIViewController {
         savedMainPrice = Double(mainPriceField.text ?? "") ?? savedMainPrice
         viewModel.tankInfo!.mainTankPrice = savedMainPrice
         mainPriceField.text = String(savedMainPrice)
-        
-        savedAuxPrice = Double(auxPriceField.text ?? "") ?? savedAuxPrice
-        viewModel.tankInfo!.auxTankPrice = savedAuxPrice
-        auxPriceField.text = String(savedAuxPrice)
-        
-        savedAuxPriceUnit = auxPriceUnitControl.selectedSegmentIndex == 0 ? "/gal" : "/L"
-        viewModel.tankInfo?.auxTankPriceUnit = savedAuxPriceUnit
-        auxPriceUnitControl.selectedSegmentIndex = savedAuxPriceUnit == "/gal" ? 0 : 1
-        
+
         savedMainPriceUnit = mainPriceUnitControl.selectedSegmentIndex == 0 ? "/gal" : "/L"
         viewModel.tankInfo?.mainTankPriceUnit = savedMainPriceUnit
         mainPriceUnitControl.selectedSegmentIndex = savedMainPriceUnit == "/gal" ? 0 : 1
+        
+        savedMainLevelUnit = mainLevelUnitControl.selectedSegmentIndex == 0 ? "gal" : "L"
+        viewModel.tankInfo?.mainTankLevelUnit = savedMainLevelUnit
+        mainLevelUnitControl.selectedSegmentIndex = savedMainLevelUnit == "gal" ? 0 : 1
+        
+        savedAuxLevelUnit = auxLevelUnitControl.selectedSegmentIndex == 0 ? "gal" : "L"
+        viewModel.tankInfo?.auxTankLevelUnit = savedAuxLevelUnit
+        auxLevelUnitControl.selectedSegmentIndex = savedAuxLevelUnit == "gal" ? 0 : 1
         
         savedOdometerReading = Double(odometerTextField.text ?? "") ?? savedOdometerReading
         viewModel.tankInfo?.odometer = savedOdometerReading
         odometerTextField.text = String(savedOdometerReading)
         
         EntriesService.shared.log(tankInfo: viewModel.tankInfo!)
+        hasNewReading = true
+        
+        loxoneAckLabel.text = "Has New Reading"
+        
         let df = DateFormatter()
         df.dateFormat = "d MMM, HH:mm"
         if let lastUpdatedDate = EntriesService.shared.entries.first?.time {
@@ -599,8 +719,7 @@ class ViewController: UIViewController {
     @IBAction func getEntryLogTapped() {
         let entries = EntriesService.shared.entries
         do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
+            let encoder = JSONEncoder.isoDateEncoder()
             let jsonData = try encoder.encode(entries)
             let jsonString = String(data: jsonData, encoding: .utf8)
             
@@ -666,29 +785,29 @@ extension ViewController: UITextFieldDelegate {
     }
 }
 
-extension ViewController: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else {
-            return
-        }
-        
-        viewModel.lastKnownLatitude = location.coordinate.latitude
-        viewModel.lastKnownLongitude = location.coordinate.longitude
-        viewModel.lastKnownElevation = location.altitude
-//        print("new location:", location.coordinate)
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        switch status {
-        case .restricted, .denied:
-            // Handle restriction or denial
-            break
-        case .authorizedWhenInUse, .authorizedAlways:
-            // Location permissions are granted. Start updating locations
-            locationManager.startUpdatingLocation()
-        default:
-            break
-        }
-    }
-
-}
+//extension ViewController: CLLocationManagerDelegate {
+//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+//        guard let location = locations.last else {
+//            return
+//        }
+//        
+//        viewModel.lastKnownLatitude = location.coordinate.latitude
+//        viewModel.lastKnownLongitude = location.coordinate.longitude
+//        viewModel.lastKnownElevation = location.altitude
+////        print("new location:", location.coordinate)
+//    }
+//    
+//    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+//        switch status {
+//        case .restricted, .denied:
+//            // Handle restriction or denial
+//            break
+//        case .authorizedWhenInUse, .authorizedAlways:
+//            // Location permissions are granted. Start updating locations
+//            locationManager.startUpdatingLocation()
+//        default:
+//            break
+//        }
+//    }
+//
+//}

@@ -20,6 +20,7 @@
 		95C4788A2BB37BB300F57443 /* OBDDataPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C478892BB37BB300F57443 /* OBDDataPoint.swift */; };
 		95C4788C2BB37E8A00F57443 /* ReadingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4788B2BB37E8A00F57443 /* ReadingsService.swift */; };
 		95DA314E2BACDAC500761B36 /* silence.wav in Resources */ = {isa = PBXBuildFile; fileRef = 95DA314D2BACDAC400761B36 /* silence.wav */; };
+		95F7C78C2E16F8010069D597 /* LTSupportAutomotive in Frameworks */ = {isa = PBXBuildFile; productRef = 95F7C78B2E16F8010069D597 /* LTSupportAutomotive */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				954AEBCB2BACAECB007F042E /* GCDWebServer in Frameworks */,
+				95F7C78C2E16F8010069D597 /* LTSupportAutomotive in Frameworks */,
 				9571A7D92BB767F300116B20 /* LTSupportAutomotive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -105,6 +107,7 @@
 			packageProductDependencies = (
 				954AEBCA2BACAECB007F042E /* GCDWebServer */,
 				9571A7D82BB767F300116B20 /* LTSupportAutomotive */,
+				95F7C78B2E16F8010069D597 /* LTSupportAutomotive */,
 			);
 			productName = OBD2Loxone;
 			productReference = 954AEBB22BACAE87007F042E /* OBD2Loxone.app */;
@@ -136,7 +139,7 @@
 			mainGroup = 954AEBA92BACAE87007F042E;
 			packageReferences = (
 				954AEBC92BACAECB007F042E /* XCRemoteSwiftPackageReference "GCDWebServer" */,
-				9571A7D72BB767F300116B20 /* XCLocalSwiftPackageReference "../LTSupportAutomotive" */,
+				95F7C78A2E16F8010069D597 /* XCLocalSwiftPackageReference "LTSupportAutomotive" */,
 			);
 			productRefGroup = 954AEBB32BACAE87007F042E /* Products */;
 			projectDirPath = "";
@@ -407,9 +410,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		9571A7D72BB767F300116B20 /* XCLocalSwiftPackageReference "../LTSupportAutomotive" */ = {
+		95F7C78A2E16F8010069D597 /* XCLocalSwiftPackageReference "LTSupportAutomotive" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../LTSupportAutomotive;
+			relativePath = LTSupportAutomotive;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -431,6 +434,10 @@
 			productName = GCDWebServer;
 		};
 		9571A7D82BB767F300116B20 /* LTSupportAutomotive */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LTSupportAutomotive;
+		};
+		95F7C78B2E16F8010069D597 /* LTSupportAutomotive */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LTSupportAutomotive;
 		};
